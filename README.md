@@ -5,6 +5,7 @@
 1. Overview
 1. License
 1. Architecture Overview
+1. Workflow Process
 1. Features
 1. Repository Breakdown
 
