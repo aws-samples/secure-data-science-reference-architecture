@@ -1,0 +1,160 @@
+# The following template is designed to provision and configure a secure environment for data science.
+# This template creates an AWS VPC, a KMS CMK, an administrator and data scientist role, and an S3 bucket.
+# The template also provisions a Service Catalog portfolio and product to create notebooks into the VPC.
+# Lastly the template stores outputs into Parameter Store so they can be referenced later by SC products.
+Description: Data Science Environment
+
+Parameters:
+  ProjectName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9\-]*'
+    Description: Please specify your Team Name.  Used as a suffix for team resource names
+
+  EnvType:
+    Description: >-
+      Please specify the target Environment. Used for tagging and resource
+      names. Mandatory LOWER CASE.
+    Type: String
+    Default: dev
+
+  VpcCIDR:
+    Type: String
+    Default: 10.2.0.0/16
+    Description: CIDR range for data science VPC
+
+  Subnet1CIDR:
+    Type: String
+    Default: 10.2.1.0/24
+    Description: CIDR range for data science Subnet A
+
+  Subnet2CIDR:
+    Type: String
+    Default: 10.2.2.0/24
+    Description: CIDR range for data science Subnet B
+
+  Subnet3CIDR:
+    Type: String
+    Default: 10.2.3.0/24
+    Description: CIDR range for data science Subnet C
+
+  SharedServiceStackSetName:
+    Type: String
+    Default: DSSharedServices
+    Description: Common root name used across shared service cloudformation resources
+
+Outputs:
+  AssumeProjectAdminRole:
+    Description: URL for assuming the role of a project admin
+    Value: !GetAtt DSEnvironmentPrincipals.Outputs.AssumeProjectAdminRole
+
+  AssumeProjectUserRole:
+    Description: URL for assuming the role of a project user
+    Value: !GetAtt DSEnvironmentPrincipals.Outputs.AssumeProjectUserRole
+
+Resources:
+  DSEnvironmentNetwork:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        ProjectName: !Ref ProjectName
+        EnvType: !Ref EnvType
+        VpcCIDR: !Ref VpcCIDR
+        Subnet1CIDR: !Ref Subnet1CIDR
+        Subnet2CIDR: !Ref Subnet2CIDR
+        Subnet3CIDR: !Ref Subnet3CIDR
+        PyPIMirrorEndpointServiceName: 
+          !Sub 
+            - 'com.amazonaws.vpce.${AWS::Region}.${ENDPOINT_ID}'
+            - ENDPOINT_ID:
+                Fn::ImportValue:
+                  !Sub 'srv-endsrv-pypimirror-${SharedServiceStackSetName}'
+      TemplateURL: ds_env_network.yaml
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DSEnvironmentPrincipals:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        ProjectName: !Ref ProjectName
+        EnvType: !Ref EnvType
+      TemplateURL: ds_env_principals.yaml
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+  
+  DSEnvironmentBackingStore:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - DSEnvironmentNetwork
+      - DSEnvironmentPrincipals
+    Properties:
+      Parameters:
+        ProjectName: !Ref ProjectName
+        EnvType: !Ref EnvType
+      TemplateURL: ds_env_backing_store.yaml
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DSEnvironmentCatalog:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: DSEnvironmentPrincipals
+    Properties:
+      Parameters:
+        ProjectName: !Ref ProjectName
+        EnvType: !Ref EnvType
+        QuickstartMode: 
+          Fn::ImportValue:
+            !Sub '${SharedServiceStackSetName}-QuickstartMode'
+
+      TemplateURL: ds_env_catalog.yaml
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DSEnvironmentSageMaker:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: DSEnvironmentBackingStore
+    Properties:
+      Parameters:
+        ProjectName: !Ref ProjectName
+        EnvType: !Ref EnvType
+      TemplateURL: ds_env_sagemaker.yaml
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DSEnvironmentResourceGroup:
+    Type: "AWS::ResourceGroups::Group"
+    Properties:
+      Name: !Sub 'ds-${ProjectName}-${EnvType}-resource-group'
+      Description: !Sub 'AWS Resources belonging to ${ProjectName} in its ${EnvType} environment.'
+      ResourceQuery:
+        Type: "TAG_FILTERS_1_0" 
+        Query:
+          ResourceTypeFilters: 
+            - "AWS::AllSupported" 
+          TagFilters:
+            - Key: "ProjectName" 
+              Values: 
+                - !Sub '${ProjectName}'
+            - Key: "EnvironmentType" 
+              Values: 
+                - !Sub '${EnvType}'
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType

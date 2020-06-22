@@ -1,0 +1,155 @@
+Description: |
+  Template to create a service catalog product to launch a notebook
+
+Parameters:
+  ProjectName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9\-]*'
+    Description: Please specify your project name.  Used as a suffix for project resource names.
+
+  EnvType:
+    Description: System Environment
+    Type: String
+    Default: dev
+
+  QuickstartMode:
+    Type: String
+    Default: true
+    Description: true indicates a quickstart-style deployment, false indicates a workshop deployment
+
+Conditions: 
+  IsAQuickstart: !Equals [ !Ref QuickstartMode, true ]
+
+Resources:
+  DSUserPortfolio:
+    Type: AWS::ServiceCatalog::Portfolio 
+    Properties:
+      Description: !Sub 'Portfolio for ${ProjectName}-${EnvType} products'
+      DisplayName: !Sub '${ProjectName}-${EnvType} products'
+      ProviderName: !Sub '${ProjectName} Administration'
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DSUserNotebookProduct:
+    Type: AWS::ServiceCatalog::CloudFormationProduct
+    Properties:
+      Description: !Sub 'SageMaker ${EnvType} notebook for the ${ProjectName} project'
+      Name: !Sub '${ProjectName} SageMaker ${EnvType} notebook'
+      Owner: 'Data Science CoE'
+      ProvisioningArtifactParameters:
+        - Name: 'DS User Notebook v1'
+          Info:
+            LoadTemplateFromURL: !If
+              - IsAQuickstart
+              - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET >/ds_notebook_v2.yaml'
+              - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET >/ds_notebook_v1.yaml' 
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  SCPortfolioSageMakerProductAssociation:
+    Type: 'AWS::ServiceCatalog::PortfolioProductAssociation'
+    Properties:
+      PortfolioId: !Ref DSUserPortfolio
+      ProductId: !Ref DSUserNotebookProduct
+
+  DSAdminPortfolioPrincipalAssociation:
+    Type: 'AWS::ServiceCatalog::PortfolioPrincipalAssociation'
+    Properties:
+      PortfolioId: !Ref DSUserPortfolio
+      PrincipalARN: 
+        Fn::ImportValue:
+          !Sub 'ds-admin-role-${ProjectName}-${EnvType}-arn'
+      PrincipalType: IAM
+
+  DSUserPortfolioPrincipalAssociation:
+    Type: 'AWS::ServiceCatalog::PortfolioPrincipalAssociation'
+    Properties:
+      PortfolioId: !Ref DSUserPortfolio
+      PrincipalARN: 
+        Fn::ImportValue:
+          !Sub 'ds-user-role-${ProjectName}-${EnvType}-arn'
+      PrincipalType: IAM
+  
+  SCLaunchRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: servicecatalog.amazonaws.com
+            Action: 'sts:AssumeRole'
+      RoleName: !Sub "ds-sc-launch-role-${ProjectName}-${EnvType}"
+      Policies:
+        - PolicyName: SCInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: Policy1
+                Effect: Allow
+                Action:
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:CreatePolicy'
+                  - 'iam:CreatePolicyVersion'
+                  - 'iam:CreateRole'
+                  - 'iam:DeletePolicy'
+                  - 'iam:DeletePolicyVersion'
+                  - 'iam:DeleteRole'
+                  - 'iam:DetachRolePolicy'
+                  - 'iam:ListPolicyVersions'
+                  - 'iam:TagRole'
+                  - 'kms:CreateGrant'
+                  - 'kms:CreateKey'
+                  - 'kms:DeleteAlias'
+                  - 'kms:DeleteCustomKeyStore'
+                  - 'kms:DeleteImportedKeyMaterial'
+                  - 'kms:EnableKey'
+                  - 'kms:EnableKeyRotation'
+                  - 'kms:PutKeyPolicy'
+                  - 'kms:ScheduleKeyDeletion'
+                  - 'kms:TagResource'
+                  - 'kms:UpdateAlias'
+                  - 'kms:UpdateCustomKeyStore'
+                  - 'kms:UpdateKeyDescription'
+                  - 'ssm:AddTagsToResource'
+                  - 'ssm:DeleteParameter'
+                  - 'ssm:DeleteParameters'
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:PutParameter'
+                  - 'ssm:RemoveTagsFromResource'
+                Resource: '*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSCloudFormationFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSageMakerFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSLambdaFullAccess'
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  SCProductLaunchRoleConstraint:
+    Type: 'AWS::ServiceCatalog::LaunchRoleConstraint'
+    DependsOn: SCPortfolioSageMakerProductAssociation
+    Properties:
+      Description: The Launch Role SC uses to launch product
+      PortfolioId: !Ref DSUserPortfolio
+      ProductId: !Ref DSUserNotebookProduct
+      RoleArn: !GetAtt SCLaunchRole.Arn
+
+  SCLaunchRoleArn:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-sc-launch-role-${ProjectName}-${EnvType}-arn"
+      Type: String
+      Value: !GetAtt SCLaunchRole.Arn
+      Description: SSM-Parameter Service Catalog Launch Role Arn

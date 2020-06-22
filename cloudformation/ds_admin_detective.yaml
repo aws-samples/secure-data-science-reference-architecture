@@ -1,0 +1,87 @@
+Description: |
+  Deploy a Lambda function and CloudWatch trigger to inspect SageMaker resources and ensure they are attached to a VPC.
+
+Parameters:
+  StackSetName:
+    Type: String 
+    Description: A name to be used across nested stacks 
+
+Resources:
+  SageMakerDetectiveControlExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      RoleName: !Sub '${StackSetName}-SageMaker-DetectiveControl-Role'
+      Policies:
+        - PolicyName: LambdaInlineForSageMaker
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: VisualEditor0
+                Effect: Allow
+                Action:
+                  - 'sagemaker:DeleteTags'
+                  - 'sagemaker:DeleteEndpointConfig'
+                  - 'sagemaker:ListTags'
+                  - 'sagemaker:ListTransformJobs'
+                  - 'sagemaker:StopTrainingJob'
+                  - 'sagemaker:DeleteModel'
+                  - 'sagemaker:ListTrainingJobs'
+                  - 'sagemaker:ListHyperParameterTuningJobs'
+                  - 'sagemaker:DeleteEndpoint'
+                  - 'sagemaker:ListModels'
+                  - 'sagemaker:StopTransformJob'
+                  - 'sagemaker:AddTags'
+                  - 'sagemaker:ListEndpoints'
+                Resource: '*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  SageMakerVPCDetectiveControl: 
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: SageMakerVPCEnforcer
+      Description: Detective control to enforce VPC attachment of SageMaker resources
+      Runtime: python3.6
+      Code: vpc_detective_control.zip
+      Handler: inspect_sagemaker_resource.lambda_handler
+      MemorySize: 320
+      Timeout: 180
+      Role: !GetAtt SageMakerDetectiveControlExecutionRole.Arn
+
+  SageMakerVPCEnforcementRule:
+    Type: 'AWS::Events::Rule'
+    DependsOn: SageMakerVPCDetectiveControl
+    Properties:
+      Description: The Cloudwatch Rule checking VPC enablement of SageMaker resources
+      EventPattern:
+        source:
+          - aws.sagemaker
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - sagemaker.amazonaws.com
+          eventName:
+            - CreateTrainingJob
+            - CreateModel
+      Name: SageMakerVPCEnforcementRule
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SageMakerVPCDetectiveControl.Arn
+          Id: SagemakerVPCEnforcementLambda
+
+  InvokeLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    DependsOn: SageMakerVPCEnforcementRule
+    Properties:
+      FunctionName: !GetAtt SageMakerVPCDetectiveControl.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SageMakerVPCEnforcementRule.Arn

@@ -1,0 +1,495 @@
+Description: |
+  Create a secure VPC designed to host a data science project team.
+
+Parameters:
+  ProjectName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9\-]*'
+    Description: Please specify your project name.  Used as a suffix for project resource names.
+
+  EnvType:
+    Description: System Environment
+    Type: String
+    Default: dev
+
+  VpcCIDR:
+    Type: String
+    Default: 10.2.0.0/16
+    Description: CIDR range for data science VPC
+
+  Subnet1CIDR:
+    Type: String
+    Default: 10.2.1.0/24
+    Description: CIDR range for data science Subnet A
+
+  Subnet2CIDR:
+    Type: String
+    Default: 10.2.2.0/24
+    Description: CIDR range for data science Subnet B
+
+  Subnet3CIDR:
+    Type: String
+    Default: 10.2.3.0/24
+    Description: CIDR range for data science Subnet C
+
+  PyPIMirrorEndpointServiceName:
+    Type: String
+    Description: VPC Endpoint ID for shared service PyPI mirror
+
+Outputs:
+  S3VPCEndpointId:
+    Description: The ID of the S3 VPC Endpoint
+    Value: !Ref VPCEndpointS3
+    Export: 
+      Name: !Sub "ds-s3-endpoint-${ProjectName}-${EnvType}-id"
+
+  PyPIMirrorEndpointDNS:
+    Description: DNS entries for the PyPI mirror VPC endpoint 
+    Value: 
+      Fn::Select:
+        - 0
+        - !GetAtt SharedServicesPyPIMirrorVPCEndpoint.DnsEntries
+    Export:
+      Name: !Sub 'ds-pypi-endpoint-${ProjectName}-${EnvType}-dns'
+  
+  Subnet1Id:
+    Description: The ID of the first Subnet
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub 'ds-subnet1-${ProjectName}-${EnvType}'
+
+  Subnet2Id:
+    Description: The ID of the second Subnet
+    Value: !Ref PrivateSubnetB
+    Export:
+      Name: !Sub 'ds-subnet2-${ProjectName}-${EnvType}'
+
+  Subnet3Id:
+    Description: The ID of the third Subnet
+    Value: !Ref PrivateSubnetC
+    Export:
+      Name: !Sub 'ds-subnet3-${ProjectName}-${EnvType}'
+
+  SageMakerSecurityGroup:
+    Description: Security Group ID for the SageMaker Resources
+    Value: !GetAtt SageMakerSecurityGroup.GroupId
+    Export:
+      Name: !Sub "ds-sagemaker-sg-${ProjectName}-${EnvType}"
+
+Resources:
+  #########################
+  #
+  # VPC AND SUBNETS
+  #
+  #########################
+  SageMakerVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "ds-vpc-${ProjectName}-${EnvType}"
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  SageMakerVPCId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-vpc-${ProjectName}-${EnvType}-id"
+      Type: String
+      Value: !Ref SageMakerVPC
+      Description: SageMaker VPC ID
+
+  PrivateSubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref SageMakerVPC
+      CidrBlock: !Ref Subnet1CIDR
+      AvailabilityZone: !Sub  "${AWS::Region}a"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  PrivateSubnetAId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-subnet-a-${ProjectName}-${EnvType}-id"
+      Type: String
+      Value: !Ref PrivateSubnetA
+      Description: Private Subnet-A ID
+
+  PrivateSubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref SageMakerVPC
+      CidrBlock: !Ref Subnet2CIDR
+      AvailabilityZone: !Sub  "${AWS::Region}b"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  PrivateSubnetBId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-subnet-b-${ProjectName}-${EnvType}-id"
+      Type: String
+      Value: !Ref PrivateSubnetB
+      Description: Private Subnet-B ID
+
+  PrivateSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref SageMakerVPC
+      CidrBlock: !Ref Subnet3CIDR
+      AvailabilityZone: !Sub  "${AWS::Region}c"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  PrivateSubnetCId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-subnet-c-${ProjectName}-${EnvType}-id"
+      Type: String
+      Value: !Ref PrivateSubnetC
+      Description: Private Subnet-B ID
+
+  #########################
+  #
+  # ROUTE TABLES
+  #
+  #########################
+
+  PrivateRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref SageMakerVPC
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetA
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetB
+
+  PrivateSubnetRouteTableAssociation3:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetC
+
+  #########################
+  #
+  # SECURITY GROUPS
+  #
+  #########################
+      
+  VPCEndpointSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow TLS for VPC Endpoint
+      VpcId: !Ref SageMakerVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !GetAtt SageMakerSecurityGroup.GroupId
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  SageMakerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Security Group for SageMaker Notebook, Training Job and Hosting Endpoint'
+      VpcId: !Ref SageMakerVPC
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  SageMakerSecurityGroupId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-sagemaker-sg-${ProjectName}-${EnvType}-id"
+      Type: String
+      Value: !GetAtt SageMakerSecurityGroup.GroupId
+      Description: SageMaker Security Group ID
+
+  SharedServicesVPCEndpointSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow HTTP for VPC Endpoint
+      VpcId: !Ref SageMakerVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !GetAtt SageMakerSecurityGroup.GroupId
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  #########################
+  #
+  # VPC ENDPOINTS
+  #
+  #########################
+  VPCEndpointS3:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      VpcId: !Ref SageMakerVPC
+      PolicyDocument: 
+        !Sub |
+        { 
+          "Version":"2012-10-17", 
+          "Statement":[{ 
+            "Effect":"Allow", 
+            "Principal": "*", 
+            "Action":[
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:ListBucket"
+            ], 
+            "Resource":[
+              "arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}",
+              "arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}",
+              "arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}/*",
+              "arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}/*"
+              ]
+          }]
+        }
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
+  VPCEndpointS3Id:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-s3-endpoint-${ProjectName}-${EnvType}-id"
+      Type: String
+      Value: !Ref VPCEndpointS3
+      Description: S3 VPC Endpoint ID
+
+  VPCEndpointSSM:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ssm'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointCW:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointCWL:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointSagemakerAPI:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sagemaker.api'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointSageMakerRuntime:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sagemaker.runtime'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointSageMakerNotebook:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'aws.sagemaker.${AWS::Region}.notebook'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointSTS:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointCodeCommit:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.git-codecommit'
+      VpcId: !Ref SageMakerVPC
+
+  VPCEndpointCodeCommitAPI:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.codecommit'
+      VpcId: !Ref SageMakerVPC
+
+  SharedServicesPyPIMirrorVPCEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: false
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref SharedServicesVPCEndpointSecurityGroup
+      ServiceName: !Ref PyPIMirrorEndpointServiceName
+      VpcId: !Ref SageMakerVPC

@@ -1,0 +1,100 @@
+Outputs:
+  AssumeProjectAdminRole:
+    Description: URL for assuming the role of a project admin
+    Value: !Sub 'https://signin.aws.amazon.com/switchrole?account=${AWS::AccountId}&roleName=${DataSciencePrincipals.Outputs.DSAdministratorName}&displayName=${DataSciencePrincipals.Outputs.DSAdministratorName}'
+
+  QuickstartMode:
+    Description: Whether this stack set was deployed as a quickstart 
+    Value: !Ref QuickstartMode
+    Export:
+      Name: !Sub '${SharedServiceStackSetName}-QuickstartMode'
+
+Parameters:
+  SharedServiceStackSetName:
+    Type: String 
+    Default: DSSharedServices 
+    Description: Name to be used as a common root across all shared service resources for reference from other Cloudformation stacks
+
+  QuickstartMode:
+    Type: String
+    Default: true
+    Description: true indicates a quickstart-style deployment, false indicates a workshop deployment
+
+Conditions: 
+  IsAQuickstart: !Equals [ !Ref QuickstartMode, true ]
+
+Resources:
+
+  DataScienceAdministratorPortfolio:
+    Type: 'AWS::ServiceCatalog::Portfolio'
+    Condition: IsAQuickstart
+    Properties:
+      ProviderName: 'Data Science Administration Team'
+      Description: 'This portfolio is a collection of products designed to support managing data science projects'
+      DisplayName: 'Products for managing data science projects'
+
+  DSEnvironmentProduct:
+    Type: 'AWS::ServiceCatalog::CloudFormationProduct'
+    Condition: IsAQuickstart
+    Properties:
+      Name: 'Data Science Project Environment'
+      Description: 'A VPC, S3 bucket, and service catalog portfolio to support data science projects.'
+      Owner: 'Data Science Administration Office'
+      ProvisioningArtifactParameters:
+        - Name: 'DS Environment v1'
+          Info:
+            LoadTemplateFromURL: 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET >/ds_environment.yaml'
+
+  SCPortfolioSageMakerProductAssociation:
+    Type: 'AWS::ServiceCatalog::PortfolioProductAssociation'
+    Condition: IsAQuickstart
+    Properties:
+      PortfolioId: !Ref DataScienceAdministratorPortfolio
+      ProductId: !Ref DSEnvironmentProduct
+
+  DSAdminPortfolioPrincipleAssociation:
+    Type: 'AWS::ServiceCatalog::PortfolioPrincipalAssociation'
+    Condition: IsAQuickstart
+    Properties:
+      PortfolioId: !Ref DataScienceAdministratorPortfolio
+      PrincipalARN: !GetAtt DataSciencePrincipals.Outputs.DSAdministratorArn
+      PrincipalType: IAM
+
+  SCProductLaunchRoleConstraint:
+    Type: 'AWS::ServiceCatalog::LaunchRoleConstraint'
+    Condition: IsAQuickstart
+    DependsOn: SCPortfolioSageMakerProductAssociation
+    Properties:
+      Description: The Launch Role SC uses to launch product
+      PortfolioId: !Ref DataScienceAdministratorPortfolio
+      ProductId: !Ref DSEnvironmentProduct
+      RoleArn: !GetAtt DataSciencePrincipals.Outputs.SCLaunchRoleArn
+
+  DataSciencePrincipals:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        StackSetName: !Ref SharedServiceStackSetName
+      TemplateURL: ds_admin_principals.yaml
+      
+  SharedServiceNetwork:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        StackSetName: !Ref SharedServiceStackSetName
+      TemplateURL: ds_shared_services_network.yaml
+
+  SharedServicePyPIMirror:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SharedServiceNetwork
+    Properties:
+      Parameters:
+        StackSetName: !Ref SharedServiceStackSetName
+      TemplateURL: ds_shared_services_ecs.yaml
+
+  SageMakerDetectiveControl:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        StackSetName: !Ref SharedServiceStackSetName
+      TemplateURL: ds_admin_detective.yaml

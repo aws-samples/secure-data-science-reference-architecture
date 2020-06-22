@@ -1,0 +1,189 @@
+Description: |
+  Template to create IAM principals for operation within the data science environment.
+
+Parameters:
+  ProjectName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9\-]*'
+    Description: Please specify your project name.  Used as a suffix for project resource names.
+
+  EnvType:
+    Description: System Environment
+    Type: String
+    Default: dev
+
+Outputs:
+  DataScientistAdminRoleArn:
+    Description: ARN of the data science administration role for this project
+    Value: !GetAtt DataScientistAdminRole.Arn
+    Export:
+      Name: !Sub "ds-admin-role-${ProjectName}-${EnvType}-arn"
+
+  DataScientistUserRoleArn:
+    Description: ARN of the data science user role for this project
+    Value: !GetAtt DataScientistRole.Arn
+    Export:
+      Name: !Sub "ds-user-role-${ProjectName}-${EnvType}-arn"
+
+  AssumeProjectAdminRole:
+    Description: URL for assuming the role of a project admin
+    Value: !Sub 'https://signin.aws.amazon.com/switchrole?account=${AWS::AccountId}&roleName=${DataScientistAdminRole}&displayName=${DataScientistAdminRole}'
+
+  AssumeProjectUserRole:
+    Description: URL for assuming the role of a project user
+    Value: !Sub 'https://signin.aws.amazon.com/switchrole?account=${AWS::AccountId}&roleName=${DataScientistRole}&displayName=${DataScientistRole}'
+
+
+Resources:
+  DataScientistAdminRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'sts:AssumeRole'
+      RoleName: !Sub "ds-admin-role-${ProjectName}-${EnvType}"
+      Policies:
+        - PolicyName: SageMakerAccessInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: VisualEditor0
+                Effect: Allow
+                Action:
+                  - 'sagemaker:*'
+                Resource: '*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/AWSCloudFormationFullAccess'
+        - 'arn:aws:iam::aws:policy/ReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSSMFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSCodeCommitFullAccess'
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DataScientistRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'sts:AssumeRole'
+      RoleName: !Sub "ds-user-role-${ProjectName}-${EnvType}"
+      Policies:
+        - PolicyName: SageMakerAccessInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: VisualEditor0
+                Effect: Allow
+                Action:
+                  - 'sagemaker:CreateModel'
+                  - 'sagemaker:DescribeTrainingJob'
+                  - 'sagemaker:DescribeLabelingJob'
+                  - 'sagemaker:DescribeModelPackage'
+                  - 'sagemaker:ListTransformJobs'
+                  - 'sagemaker:Search'
+                  - 'sagemaker:ListTrainingJobs'
+                  - 'sagemaker:DescribeAlgorithm'
+                  - 'sagemaker:UpdateEndpointWeightsAndCapacities'
+                  - 'sagemaker:UpdateCodeRepository'
+                  - 'sagemaker:DescribeTransformJob'
+                  - 'sagemaker:ListSubscribedWorkteams'
+                  - 'sagemaker:ListLabelingJobsForWorkteam'
+                  - 'sagemaker:CreateEndpoint'
+                  - 'sagemaker:ListAlgorithms'
+                  - 'sagemaker:CreateModelPackage'
+                  - 'sagemaker:ListNotebookInstanceLifecycleConfigs'
+                  - 'sagemaker:DeleteModel'
+                  - 'sagemaker:DescribeSubscribedWorkteam'
+                  - 'sagemaker:ListCompilationJobs'
+                  - 'sagemaker:DescribeHyperParameterTuningJob'
+                  - 'sagemaker:ListEndpointConfigs'
+                  - 'sagemaker:CreateEndpointConfig'
+                  - 'sagemaker:ListTrainingJobsForHyperParameterTuningJob'
+                  - 'sagemaker:DescribeEndpointConfig'
+                  - 'sagemaker:StopNotebookInstance'
+                  - 'sagemaker:RenderUiTemplate'
+                  - 'sagemaker:StopTransformJob'
+                  - 'sagemaker:ListWorkteams'
+                  - 'sagemaker:DescribeNotebookInstance'
+                  - 'sagemaker:CreateAlgorithm'
+                  - 'sagemaker:CreateTrainingJob'
+                  - 'sagemaker:DescribeNotebookInstanceLifecycleConfig'
+                  - 'sagemaker:StopHyperParameterTuningJob'
+                  - 'sagemaker:DeleteCodeRepository'
+                  - 'sagemaker:DeleteEndpoint'
+                  - 'sagemaker:DescribeEndpoint'
+                  - 'sagemaker:CreateTransformJob'
+                  - 'sagemaker:ListNotebookInstances'
+                  - 'sagemaker:InvokeEndpoint'
+                  - 'sagemaker:ListTags'
+                  - 'sagemaker:CreateCodeRepository'
+                  - 'sagemaker:DescribeModel'
+                  - 'sagemaker:StopTrainingJob'
+                  - 'sagemaker:ListHyperParameterTuningJobs'
+                  - 'sagemaker:ListModelPackages'
+                  - 'sagemaker:DescribeWorkteam'
+                  - 'sagemaker:UpdateEndpoint'
+                  - 'sagemaker:ListLabelingJobs'
+                  - 'sagemaker:DescribeCompilationJob'
+                  - 'sagemaker:GetSearchSuggestions'
+                  - 'sagemaker:CreatePresignedNotebookInstanceUrl'
+                  - 'sagemaker:StartNotebookInstance'
+                  - 'sagemaker:ListModels'
+                  - 'sagemaker:DescribeCodeRepository'
+                  - 'sagemaker:ListEndpoints'
+                  - 'sagemaker:ListCodeRepositories'
+                  - 'codecommit:BatchGetRepositories'
+                  - 'codecommit:GitPull'
+                  - 'codecommit:GitPush'
+                  - 'codecommit:CreateBranch'
+                  - 'codecommit:DeleteBranch'
+                  - 'codecommit:GetBranch'
+                  - 'codecommit:ListBranches'
+                  - 'codecommit:CreatePullRequest'
+                  - 'codecommit:CreatePullRequestApproval'
+                  - 'codecommit:GetPullRequest'
+                  - 'codecommit:CreateCommit'
+                  - 'codecommit:GetCommit'
+                  - 'codecommit:GetCommitHistory'
+                  - 'codecommit:GetDifferences'
+                  - 'codecommit:GetReferences'
+                  - 'codecommit:CreateRepository'
+                  - 'codecommit:GetRepository'
+                  - 'codecommit:ListRepositories'
+                Resource: '*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSServiceCatalogEndUserFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AWSLambdaReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AWSCodeCommitReadOnly'
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DataScientistRoleArn:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-user-role-${ProjectName}-${EnvType}-arn"
+      Type: String
+      Value: !GetAtt DataScientistRole.Arn
+      Description: SSM-Parameter - DataScientist Role Arn

@@ -1,0 +1,276 @@
+Description: |
+  Create an ECS cluster and services to run the shared services for Data Science project
+
+Parameters:
+  StackSetName:
+    Type: String 
+    Description: A name to be used across nested stacks 
+
+Outputs:
+
+  PyPIMirrorVPCEndpointService:
+    Description: The ID of the VPC Endpoint Service for PyPIMirror
+    Value: !Ref SharedVPCEndpointService
+    Export:
+      Name: !Sub 'srv-endsrv-pypimirror-${StackSetName}'
+
+Resources:
+
+  #########################
+  #
+  # SECURITY GROUPS
+  #
+  #########################
+
+  PyPIMirrorSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Security Group for EC2 instances running the PyPI mirror'
+      VpcId:
+        Fn::ImportValue:
+          !Sub 'srv-vpc-${StackSetName}'
+
+  PyPIMirrorSecurityGroupIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !GetAtt PyPIMirrorSecurityGroup.GroupId
+      IpProtocol: 'tcp'
+      Description: Allow connections on port 80
+      CidrIp: 
+        Fn::ImportValue:
+          !Sub 'srv-vpc-${StackSetName}-cidr'
+      FromPort: 80
+      ToPort: 80
+
+  PyPIMirrorSecurityGroupIngress8080:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !GetAtt PyPIMirrorSecurityGroup.GroupId
+      IpProtocol: 'tcp'
+      Description: Allow connections on port 8080
+      CidrIp: 
+        Fn::ImportValue:
+          !Sub 'srv-vpc-${StackSetName}-cidr'
+      FromPort: 8080
+      ToPort: 8080
+
+  PyPIMirrorSecurityGroupId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "srv-sg-${StackSetName}-Id"
+      Type: String
+      Value: !GetAtt PyPIMirrorSecurityGroup.GroupId
+      Description: PyPI mirror Security Group ID
+
+
+  #########################
+  #
+  # NETWORK LOAD BALANCER
+  #
+  #########################
+
+  SharedServicesNLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      LoadBalancerAttributes: 
+        - Key: load_balancing.cross_zone.enabled
+          Value: 'true'
+      Name: !Sub "srv-lb-${StackSetName}"
+      Scheme: 'internet-facing' # 'internal'
+      Subnets: 
+        - Fn::ImportValue:
+            !Sub 'srv-subneta-${StackSetName}'
+        - Fn::ImportValue:
+            !Sub 'srv-subnetb-${StackSetName}'
+        - Fn::ImportValue:
+            !Sub 'srv-subnetc-${StackSetName}'
+      Tags: 
+        - Key: Name
+          Value: !Sub "srv-lb-${StackSetName}"
+      Type: 'network'
+
+  SharedServicesNLBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      Name: !Sub "srv-nlbtg-${StackSetName}"
+      Port: 80
+      Protocol: TCP
+      TargetType: ip
+      VpcId: 
+        Fn::ImportValue:
+          !Sub 'srv-vpc-${StackSetName}'
+
+  SharedServicesNLBListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref SharedServicesNLBTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref SharedServicesNLB
+      Port: 80
+      Protocol: TCP
+
+  #########################
+  #
+  # ENDPOINT SERVICE
+  #
+  #########################
+
+  SharedVPCEndpointService:
+    Type: AWS::EC2::VPCEndpointService
+    Properties: 
+      AcceptanceRequired: false
+      NetworkLoadBalancerArns: 
+        - !Ref SharedServicesNLB
+
+  #########################
+  #
+  # ECS Cluster
+  #
+  #########################
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: SharedServicesECSCluster
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${StackSetName}-PyPI-Mirror-TaskDefinition'
+
+  #########################
+  #
+  # IAM Roles for ECS
+  #
+  #########################
+  # A role needed by ECS
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${StackSetName}-PyPI-Mirror-ExecutionRole'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+  # A role for the containers
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${StackSetName}-PyPI-Mirror-TaskRole'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: S3ReadOnly
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow 
+                Action: 
+                  - 's3:Get*'
+                  - 's3:List*'
+                Resource: '*'
+
+  #########################
+  #
+  # PyPI Mirror Task & Service
+  #
+  #########################
+  # The task definition. This is a simple metadata description of what
+  # container to run, and what resource requirements it has.
+  PyPIMirrorTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Family: PyPI-Mirror
+      Cpu: '512'
+      Memory: '1024'
+      # The Amazon Resource Name (ARN) of the task execution role that 
+      # containers in this task can assume. All containers in this task 
+      # are granted the permissions that are specified in this role."
+      ExecutionRoleArn: !GetAtt ['ExecutionRole', 'Arn']
+      
+      # The Amazon Resource Name (ARN) of an AWS IAM role that grants
+      # containers in the task permission to call AWS APIs on your behalf.
+      TaskRoleArn: !Ref TaskRole
+      Volumes:
+        - Name: packages_vol
+      ContainerDefinitions:
+        - Name: pypimirror-server
+          Image: 'pypiserver/pypiserver:latest'
+          Command: 
+            - '-P.'
+            - '-a.'
+            - '/data/packages'
+          MountPoints:
+            - SourceVolume: packages_vol
+              ContainerPath: /data/packages
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroup
+              awslogs-stream-prefix: ecs
+
+        - Name:  pypimirror-s3-copy
+          Image: amazon/aws-cli
+          Essential: false
+          MountPoints: 
+              - SourceVolume: packages_vol
+                ContainerPath: /data/packages
+          Command: 
+            - s3 
+            - sync
+            - s3://< S3_CFN_STAGING_BUCKET >/pypimirror/ 
+            - /data/packages/ 
+          # Send logs to CloudWatch Logs
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroup
+              awslogs-stream-prefix: ecs
+
+  # The service. The service is a resource which allows you to run multiple
+  # copies of a type of task, and gather up their logs and metrics, as well
+  # as monitor the number of running tasks and replace any that have crashed
+  PyPIMirrorService:
+    Type: AWS::ECS::Service
+    DependsOn: SharedServicesNLBListenerHTTP
+    Properties:
+      ServiceName: PyPI-MirrorService
+      Cluster: !Ref ECSCluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75    # Note: Not suitable for production as this will cause downtime
+      DesiredCount: 1
+      LaunchType: FARGATE
+      TaskDefinition: !Ref PyPIMirrorTaskDefinition
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - Fn::ImportValue:
+                !Sub 'srv-subneta-${StackSetName}'
+            - Fn::ImportValue:
+                !Sub 'srv-subnetb-${StackSetName}'
+          SecurityGroups:
+            - !Ref PyPIMirrorSecurityGroup
+      LoadBalancers:
+        - ContainerName: pypimirror-server
+          ContainerPort: 8080
+          TargetGroupArn: !Ref SharedServicesNLBTargetGroup

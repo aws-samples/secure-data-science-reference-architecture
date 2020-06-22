@@ -1,0 +1,211 @@
+# The following template is designed to provision and configure a secure environment for data science.
+# This template creates an AWS VPC, a KMS CMK, an administrator and data scientist role, and an S3 bucket.
+# The template also provisions a Service Catalog portfolio and product to create notebooks into the VPC.
+# Lastly the template stores outputs into Parameter Store so they can be referenced later by SC products.
+Description: Data Science Environment S3 data storage
+
+Parameters:
+  ProjectName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9\-]*'
+    Description: Please specify your project name.  Used as a suffix for project resource names.
+
+  EnvType:
+    Description: System Environment
+    Type: String
+    Default: dev
+
+Outputs:
+  KMSCMK:
+    Description: KMS Key ARN for the data and model buckets
+    Value: !GetAtt KMSCMK.Arn
+
+  DataBucket:
+    Description: Data bucket name
+    Value: !Ref DataBucket
+    Export:
+      Name: !Sub 'ds-s3-data-${ProjectName}-${EnvType}'
+
+  ModelArtifactsBucket:
+    Description: Model artifacts bucket
+    Value: !Ref ModelArtifactsBucket
+    Export:
+      Name: !Sub 'ds-s3-models-${ProjectName}-${EnvType}'
+
+  CodeCommitUrl:
+    Description: Code Commit Repository
+    Value: !GetAtt CodeCommitRepo.CloneUrlHttp
+    Export:
+      Name: !Sub 'ds-source-${ProjectName}-${EnvType}-url'
+
+Resources:
+  KMSCMK:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: KMS key for S3 buckets
+      KeyPolicy:
+        Id: key-policy-1
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow access for Key Administrators
+            Effect: Allow
+            Principal:
+              AWS: 
+                Fn::ImportValue:
+                  !Sub "ds-admin-role-${ProjectName}-${EnvType}-arn"
+            Action:
+              - 'kms:Create*'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:TagResource'
+              - 'kms:UntagResource'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          - Sid: Allow access for Key Users
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt'
+              - 'kms:GenerateDataKey'
+              - 'kms:DescribeKey'
+            Resource: '*'
+            Condition:
+              StringNotEquals:
+                'aws:sourceVpce': 
+                  Fn::ImportValue: 
+                    !Sub "ds-s3-endpoint-${ProjectName}-${EnvType}-id"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  KMSCMKAlias:
+    Type: 'AWS::KMS::Alias'
+    Properties:
+      AliasName: !Sub "alias/ds-kms-cmk-${ProjectName}-${EnvType}"
+      TargetKeyId: !Ref KMSCMK
+
+  KMSCMKArn:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-kms-cmk-${ProjectName}-${EnvType}-arn"
+      Type: String
+      Value: !GetAtt 
+        - KMSCMK
+        - Arn
+      Description: SageMakerExecRole ARN
+
+  DataBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub "ds-data-bucket-${ProjectName}-${EnvType}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !Ref KMSCMK
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  DataBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref DataBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:ListBucket'
+            Effect: Deny
+            Resource:
+              - !Sub "arn:aws:s3:::${DataBucket}/*"
+              - !Sub "arn:aws:s3:::${DataBucket}"
+            Principal: '*'
+            Condition:
+              StringNotEquals:
+                'aws:sourceVpce': 
+                  Fn::ImportValue: 
+                    !Sub "ds-s3-endpoint-${ProjectName}-${EnvType}-id"
+
+  ModelArtifactsBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub "ds-model-bucket-${ProjectName}-${EnvType}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !Ref KMSCMK
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType
+
+  ModelArtifactsBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref ModelArtifactsBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:ListBucket'
+            Effect: Deny
+            Resource:
+              - !Sub "arn:aws:s3:::${ModelArtifactsBucket}/*"
+              - !Sub "arn:aws:s3:::${ModelArtifactsBucket}"
+            Principal: '*'
+            Condition:
+              StringNotEquals:
+                'aws:sourceVpce': 
+                  Fn::ImportValue: 
+                    !Sub "ds-s3-endpoint-${ProjectName}-${EnvType}-id"
+
+  CodeCommitRepo:
+    Type: 'AWS::CodeCommit::Repository'
+    Properties:
+      RepositoryName: !Sub 'ds-source-${ProjectName}-${EnvType}'
+      RepositoryDescription: Data scienc project code repository
+      Code:
+        S3: 
+          Bucket: < S3_CFN_STAGING_BUCKET >
+          Key: project_template.zip
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: EnvironmentType
+          Value: !Ref EnvType

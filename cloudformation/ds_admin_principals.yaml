@@ -1,0 +1,170 @@
+Outputs:
+  DSAdministratorName:
+    Description: The name of the DataScienceAdministrator role
+    Value: !Ref DataScienceAdministrator
+
+  DSAdministratorArn:
+    Description: The ARN of the DataScienceAdministrator role
+    Value: !GetAtt DataScienceAdministrator.Arn
+
+  SCLaunchRoleArn:
+    Description: The ARN of the Service Catalog launch role
+    Value: !GetAtt SCLaunchRole.Arn
+
+Parameters:
+  StackSetName:
+    Type: String 
+    Description: A name to be used across nested stacks 
+
+Resources:
+  DataScienceAdministrator:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 'sts:AssumeRole'
+      RoleName: !Sub '${StackSetName}-DataScienceAdministrator'
+      Policies:
+        - PolicyName: SageMakerAccessInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: VisualEditor0
+                Effect: Allow
+                Action:
+                  - 'sagemaker:*'
+                Resource: '*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/AWSCloudFormationFullAccess'
+        - 'arn:aws:iam::aws:policy/ReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSSMFullAccess'
+
+  SCLaunchRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: servicecatalog.amazonaws.com
+            Action: 'sts:AssumeRole'
+      RoleName: !Sub '${StackSetName}-ServiceCatalogLaunchRole'
+      Policies:
+        - PolicyName: SCInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: Policy1
+                Effect: Allow
+                Action:
+                  - 'cloudformation:CreateStack'
+                  - 'cloudformation:DeleteStack'
+                  - 'cloudformation:DescribeStacks'
+                  - 'cloudformation:GetTemplateSummary'
+                  - 'cloudformation:ValidateTemplate'
+                  - 'codecommit:CreateCommit'
+                  - 'codecommit:CreateRepository'
+                  - 'codecommit:DeleteRepository'
+                  - 'codecommit:GetRepository'
+                  - 'codecommit:ListRepositories'
+                  - 'codecommit:TagResource'
+                  - 'config:DescribeConfigurationRecorderStatus'
+                  - 'config:DescribeConfigurationRecorders'
+                  - 'ec2:AssociateRouteTable'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:CreateRouteTable'
+                  - 'ec2:CreateSecurityGroup'
+                  - 'ec2:CreateSubnet'
+                  - 'ec2:CreateTags'
+                  - 'ec2:CreateVpc'
+                  - 'ec2:CreateVpcEndpoint'
+                  - 'ec2:DeleteRouteTable'
+                  - 'ec2:DeleteSecurityGroup'
+                  - 'ec2:DeleteSubnet'
+                  - 'ec2:DeleteTags'
+                  - 'ec2:DeleteVpc'
+                  - 'ec2:DeleteVpcEndpoints'
+                  - 'ec2:DescribeRouteTables'
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeSubnets'
+                  - 'ec2:DescribeTags'
+                  - 'ec2:DescribeVpcEndpoints'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DisassociateRouteTable'
+                  - 'ec2:ModifyVpcAttribute'
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:CreateRole'
+                  - 'iam:DeleteRole'
+                  - 'iam:DeleteRolePolicy'
+                  - 'iam:DetachRolePolicy'
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'iam:ListPolicyVersions'
+                  - 'iam:PassRole'
+                  - 'iam:PutRolePolicy'
+                  - 'kms:CreateAlias'
+                  - 'kms:CreateGrant'
+                  - 'kms:CreateKey'
+                  - 'kms:Decrypt'
+                  - 'kms:DeleteAlias'
+                  - 'kms:DeleteCustomKeyStore'
+                  - 'kms:DeleteImportedKeyMaterial'
+                  - 'kms:DescribeKey'
+                  - 'kms:EnableKey'
+                  - 'kms:EnableKeyRotation'
+                  - 'kms:GenerateDataKey'
+                  - 'kms:ListAliases'
+                  - 'kms:PutKeyPolicy'
+                  - 'kms:ScheduleKeyDeletion'
+                  - 'kms:TagResource'
+                  - 'kms:UpdateAlias'
+                  - 'kms:UpdateCustomKeyStore'
+                  - 'kms:UpdateKeyDescription'
+                  - 'resource-groups:CreateGroup'
+                  - 'resource-groups:DeleteGroup'
+                  - 'resource-groups:Tag'
+                  - 'resource-groups:Untag'
+                  - 's3:CreateBucket'
+                  - 's3:DeleteBucket'
+                  - 's3:DeleteBucketPolicy'
+                  - 's3:GetBucketPolicy'
+                  - 's3:GetEncryptionConfiguration'
+                  - 's3:GetObject'
+                  - 's3:HeadBucket'
+                  - 's3:PutBucketPolicy'
+                  - 's3:PutBucketTagging'
+                  - 's3:PutEncryptionConfiguration'
+                  - 's3:PutBucketPublicAccessBlock'
+                  - 'sagemaker:CreateNotebookInstanceLifecycleConfig'
+                  - 'sagemaker:DeleteNotebookInstanceLifecycleConfig'
+                  - 'sagemaker:DescribeNotebookInstanceLifecycleConfig'
+                  - 'servicecatalog:AssociatePrincipalWithPortfolio'
+                  - 'servicecatalog:AssociateProductWithPortfolio'
+                  - 'servicecatalog:CreateConstraint'
+                  - 'servicecatalog:CreatePortfolio'
+                  - 'servicecatalog:CreateProduct'
+                  - 'servicecatalog:DeleteConstraint'
+                  - 'servicecatalog:DeletePortfolio'
+                  - 'servicecatalog:DeleteProduct'
+                  - 'servicecatalog:DescribeConstraint'
+                  - 'servicecatalog:DescribeProductAsAdmin'
+                  - 'servicecatalog:DescribeProvisioningArtifact'
+                  - 'servicecatalog:DisassociatePrincipalFromPortfolio'
+                  - 'servicecatalog:DisassociateProductFromPortfolio'
+                  - 'ssm:AddTagsToResource'
+                  - 'ssm:DeleteParameter'
+                  - 'ssm:DeleteParameters'
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:PutParameter'
+                  - 'ssm:RemoveTagsFromResource'
+                Resource: '*'

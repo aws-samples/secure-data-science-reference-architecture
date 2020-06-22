@@ -1,0 +1,178 @@
+Description: |
+  Create a secure VPC designed to host a data science project team.
+
+Parameters:
+  StackSetName:
+    Type: String 
+    Description: A name to be used across nested stacks 
+
+  SharedServicesVpcCIDR:
+    Type: String
+    Default: 10.1.0.0/16
+    Description: CIDR range for shared services VPC
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+
+  SharedServicesSubnet1CIDR:
+    Type: String
+    Default: 10.1.0.0/24
+    Description: CIDR range for shared services Subnet A
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+
+  SharedServicesSubnet2CIDR:
+    Type: String
+    Default: 10.1.1.0/24
+    Description: CIDR range for shared services Subnet B
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+
+  SharedServicesSubnet3CIDR:
+    Type: String
+    Default: 10.1.2.0/24
+    Description: CIDR range for shared services Subnet C
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+
+Outputs:
+  SharedServicesVPCId:
+    Description: The ID of the Shared Services VPC
+    Value: !Ref SharedServicesVPC
+    Export:
+      Name: !Sub 'srv-vpc-${StackSetName}'
+
+  SharedServicesVpcCIDRRange:
+    Description: The ID of the Shared Services VPC
+    Value: !Ref SharedServicesVpcCIDR
+    Export:
+      Name: !Sub 'srv-vpc-${StackSetName}-cidr'
+
+  SharedServicesSubnetAId:
+    Description: The ID of the first Subnet in Shared Services VPC
+    Value: !Ref SharedServicesSubnetA
+    Export:
+      Name: !Sub 'srv-subneta-${StackSetName}'
+
+  SharedServicesSubnetBId:
+    Description: The ID of the second Subnet in Shared Services VPC
+    Value: !Ref SharedServicesSubnetB
+    Export:
+      Name: !Sub 'srv-subnetb-${StackSetName}'
+
+  SharedServicesSubnetCId:
+    Description: The ID of the second Subnet in Shared Services VPC
+    Value: !Ref SharedServicesSubnetC
+    Export:
+      Name: !Sub 'srv-subnetc-${StackSetName}'
+
+
+Resources:
+  #########################
+  #
+  # VPC AND SUBNETS
+  #
+  #########################
+  SharedServicesVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref SharedServicesVpcCIDR
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "srv-vpc-${StackSetName}"
+
+  SharedServicesVPCId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "srv-vpc-${StackSetName}-id"
+      Type: String
+      Value: !Ref SharedServicesVPC
+      Description: Shared Services VPC ID
+
+  SharedServicesSubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: !Ref SharedServicesSubnet1CIDR
+      AvailabilityZone: !Sub  "${AWS::Region}a"
+
+  SharedServicesSubnetAId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "srv-subneta-${StackSetName}-subnetId"
+      Type: String
+      Value: !Ref SharedServicesSubnetA
+      Description: Shared Services Subnet-A ID
+
+  SharedServicesSubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: !Ref SharedServicesSubnet2CIDR
+      AvailabilityZone: !Sub  "${AWS::Region}b"
+
+  SharedServicesSubnetBId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "srv-subnetb-${StackSetName}-subnetId"
+      Type: String
+      Value: !Ref SharedServicesSubnetB
+      Description: Shared Services Subnet-B ID
+
+  SharedServicesSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: !Ref SharedServicesSubnet3CIDR
+      AvailabilityZone: !Sub  "${AWS::Region}c"
+
+  SharedServicesSubnetCId:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "srv-subnetc-${StackSetName}-subnetId"
+      Type: String
+      Value: !Ref SharedServicesSubnetC
+      Description: Shared Services Subnet-C ID
+
+  #########################
+  #
+  # ROUTE TABLES & IGW
+  #
+  #########################
+
+  SharedServicesIGW:
+    Type: AWS::EC2::InternetGateway
+
+  SharedServicesIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      InternetGatewayId: !Ref SharedServicesIGW
+
+  SharedServicesRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+
+  SharedServicesPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref SharedServicesRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref SharedServicesIGW
+
+  SharedServicesSubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref SharedServicesRouteTable
+      SubnetId: !Ref SharedServicesSubnetA
+
+  SharedServicesSubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref SharedServicesRouteTable
+      SubnetId: !Ref SharedServicesSubnetB
+
+  SharedServicesSubnetRouteTableAssociation3:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref SharedServicesRouteTable
+      SubnetId: !Ref SharedServicesSubnetC

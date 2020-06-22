@@ -1,0 +1,121 @@
+# The following template is designed to provision and configure a secure environment for data science.
+# This template creates an AWS VPC, a KMS CMK, an administrator and data scientist role, and an S3 bucket.
+# The template also provisions a Service Catalog portfolio and product to create notebooks into the VPC.
+# Lastly the template stores outputs into Parameter Store so they can be referenced later by SC products.
+Description: SageMaker specific resources for Data Science Environment
+
+Parameters:
+  ProjectName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9\-]*'
+    Description: Please specify your Team Name.  Used as a suffix for team resource names
+
+  EnvType:
+    Description: >-
+      Please specify the target Environment. Used for tagging and resource
+      names. Mandatory LOWER CASE.
+    Type: String
+    Default: dev
+
+Outputs:
+  SageMakerLifecycleConfig:
+    Description: Lifecycle configuration for SageMaker notebooks
+    Value: !GetAtt NotebookLifecycleConfig.NotebookInstanceLifecycleConfigName
+    Export:
+      Name: !Sub "ds-notebook-lc-${ProjectName}-${EnvType}"
+
+Resources:
+  NotebookLifecycleConfig:
+    Type: 'AWS::SageMaker::NotebookInstanceLifecycleConfig'
+    Properties:
+      NotebookInstanceLifecycleConfigName: !Sub 'ds-notebook-lc-${ProjectName}-${EnvType}'
+      OnStart:
+        - Content: 
+            Fn::Base64: 
+              !Sub 
+                - |
+                  #!/bin/bash
+
+                  set -e
+
+                  sudo -u ec2-user -i <<'EOP'
+                  #############################################
+                  ##
+                  ## Create a simple Python library to make building VPC-based SageMaker resources easier 
+                  ##
+                  #############################################
+
+                  echo Building SageMaker convenience module:
+                  echo Sensing network settings...
+                  ## Configure the approriate VPC, subnet, security group values based on values in Parameter Store
+                  VPC_ID=`aws ssm get-parameter --name ds-vpc-${ProjectName}-${EnvType}-id --region ${AWS::Region} --query 'Parameter.Value' --output text`
+                  SUBNET_1=`aws ssm get-parameter --name ds-subnet-a-${ProjectName}-${EnvType}-id --region ${AWS::Region} --query 'Parameter.Value' --output text`
+                  SUBNET_2=`aws ssm get-parameter --name ds-subnet-b-${ProjectName}-${EnvType}-id --region ${AWS::Region} --query 'Parameter.Value' --output text`
+                  SUBNET_3=`aws ssm get-parameter --name ds-subnet-c-${ProjectName}-${EnvType}-id --region ${AWS::Region} --query 'Parameter.Value' --output text`
+                  SG_ID=`aws ssm get-parameter --name ds-sagemaker-sg-${ProjectName}-${EnvType}-id --region ${AWS::Region} --query 'Parameter.Value' --output text`
+                  KMS_ARN=`aws ssm get-parameter --name ds-kms-cmk-${ProjectName}-${EnvType}-arn --region ${AWS::Region} --query 'Parameter.Value' --output text`
+
+                  echo Writing convenience module...
+                  ## Create the python module in the iPython directory which should be in every Python kernel path
+                  mkdir /home/ec2-user/.ipython
+                  # leave the module owned by root so that it cannot be deleted during initialization
+                  cat <<EOF > /home/ec2-user/.ipython/sagemaker_environment.py
+                  SAGEMAKER_VPC="$VPC_ID"
+                  SAGEMAKER_SUBNETS = ["$SUBNET_1", "$SUBNET_2", "$SUBNET_3"]
+                  SAGEMAKER_SECURITY_GROUPS = ["$SG_ID"]
+                  SAGEMAKER_KMS_KEY_ID = "$KMS_ARN"
+                  SAGEMAKER_DATA_BUCKET = "${S3_DATA_BUCKET}"
+                  SAGEMAKER_MODEL_BUCKET = "${S3_MODEL_BUCKET}"
+                  EOF
+
+                  ## NEED TO ADD S3 BUCKETS
+
+                  #############################################
+                  ##
+                  ## Configure Git
+                  ##
+                  #############################################
+
+                  echo Configuring Git for use by Notebook owner:
+                  echo Sensing SageMaker notebook tags...
+                  USER_TAG_NAME="NotebookOwnerUsername"
+                  EMAIL_TAG_NAME="NotebookOwnerEmail"
+                  NOTEBOOK_ARN=`jq -r '.ResourceArn' /opt/ml/metadata/resource-metadata.json`
+                  USER_TAG_VALUE="`aws sagemaker list-tags --resource-arn $NOTEBOOK_ARN --query 'Tags[?Key==\`'$USER_TAG_NAME'\`].Value' --output text`"
+                  EMAIL_TAG_VALUE="`aws sagemaker list-tags --resource-arn $NOTEBOOK_ARN --query 'Tags[?Key==\`'$EMAIL_TAG_NAME'\`].Value' --output text`"
+
+                  echo Configuring Git tooling...
+                  export HOME=/home/ec2-user
+                  git config --global user.name $USER_TAG_VALUE
+                  git config --global user.email $EMAIL_TAG_VALUE
+
+                  #############################################
+                  ##
+                  ## Configure PIP
+                  ##
+                  #############################################
+                  mkdir -p /home/ec2-user/.pip 
+                  cat > /home/ec2-user/.pip/pip.conf <<END
+                  [global]
+                  index-url = http://${PYPI_MIRROR_DNS}/simple/
+                  trusted_host=${PYPI_MIRROR_DNS}
+                  END
+
+                  pip install --user smdebug stepfunctions sagemaker-experiments xgboost==0.90
+
+                  EOP
+                  sudo initctl restart jupyter-server --no-wait
+
+                - S3_DATA_BUCKET: 
+                    Fn::ImportValue:
+                      !Sub 'ds-s3-data-${ProjectName}-${EnvType}'
+                  S3_MODEL_BUCKET: 
+                    Fn::ImportValue:
+                      !Sub 'ds-s3-models-${ProjectName}-${EnvType}'
+                  PYPI_MIRROR_DNS:
+                    Fn::Select:
+                      - 1
+                      - Fn::Split:
+                          - ":"
+                          - Fn::ImportValue:
+                              !Sub 'ds-pypi-endpoint-${ProjectName}-${EnvType}-dns'
