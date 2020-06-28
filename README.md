@@ -5,7 +5,7 @@
 Amazon SageMaker is a powerful enabler and a key component of a data science environment, but it’s only part of what is required to build a complete and secure data science environment. For more robust security you will need other AWS services such as Amazon CloudWatch, Amazon S3, and AWS VPC. The following are some of the key things you will want in place, working in concert, with Amazon SageMaker.
 
 ## Table of Contents
-1. Quick Deploy
+1. Getting Started
 1. License
 1. Features
 1. Architecture Overview
