@@ -69,6 +69,6 @@ Using cloud services in a safe and responsible manner is good, but being able to
 
 ## Architecture Overview
 
-![High-level Architecture](/docs/images/hla.png High-level architecture)
+![High-level Architecture](docs/images/hla.png)
 
 ## Repository Breakdown
