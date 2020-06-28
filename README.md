@@ -67,8 +67,69 @@ Using cloud services in a safe and responsible manner is good, but being able to
  - Amazon SageMaker Hosted Models
  - VPC Flow Logs
 
-## Architecture Overview
+## Architecture & Process Overview
 
 ![High-level Architecture](docs/images/hla.png)
 
+Once deployed you are provided with a Data Science Product Portfolio, powered by [AWS Service Catalog](https://aws.amazon.com/servicecatalog/).  This allows users who have assumed the *Project Administrator* role to deploy new data science environments using the *Data Science Environment* product within the catalog.  Project Administrators can specify a project name, the environment type, and a few other criteria to launch the data science environment.  AWS Service Catalog will then create a data science project environment consisting of:
+
+  - A private, isolated, dedicated network environment built using an Amazon VPC
+  - Private connectivity to specific AWS services and a customer-hosted, shared-service deployment of a PyPI mirror
+  - Private, dedicated Amazon S3 buckets for project data and intellectual property
+  - A project Git repository hosted by AWS CodeCommit
+  - Project-specific encryption keys managed by Amazon KMS
+  - Dedicated AWS IAM roles for project resources
+  - A project-specific product portfolio so project team members can provision resources for themselve
+
+To use the environment, project team members can assume the *Data Science Project Administrator* role or the *Data Science Project User* role.  Once they have assumed a project role users can provision resources within the data science environment.  By visiting the AWS Service Catalog console they can access the project's product portfolio and launch an Amazon SageMaker notebook.  
+
+AWS Service Catalog will then deploy an Amazon SageMaker-powered Jupyter notebook server using an approved CloudFormation template.  This will produce a Jupyter notebook server with:
+
+  - A KMS-encrypted EBS volume attached
+  - An IAM role associated with the notebook server which represents the intersection of user, notebook server, and project
+  - An attachment to the data science project VPC
+  - User access to `root` permissions disabled
+  - Notebook server access to network resources outside of the project VPC disabled
+  - A convenience Python module generated with constants defined for AWS KMS key IDs, VPC Subnet IDs, and Security Group IDs
+
+Once the notebook server has been deployed the user can access the notebook server directly from the Service Catalog console.
+
 ## Repository Breakdown
+
+This repository contains the following files:
+
+```bash
+├── CODE_OF_CONDUCT.md                      # Guidance for participating in this open source project
+├── CONTRIBUTING.md                         # Guidelines for contributing to this project
+├── LICENSE                                 # Details for the MIT-0 license
+├── README.md                               # This readme
+├── cloudformation
+│   ├── ds_admin_detective.yaml             # Deploys a detective control to manage SageMaker resources
+│   ├── ds_admin_principals.yaml            # Deploys the Project Administrator role
+│   ├── ds_administration.yaml              # Deploys nested stacks
+│   ├── ds_env_backing_store.yaml           # Deploys a project's S3 buckets and CodeCommit repository
+│   ├── ds_env_catalog.yaml                 # Deploys a project's product portfolio
+│   ├── ds_env_network.yaml                 # Deploys a project's private network
+│   ├── ds_env_principals.yaml              # Creates a project administrator and user
+│   ├── ds_env_sagemaker.yaml               # Creates a lifecycle configuration for this project
+│   ├── ds_environment.yaml                 # Manages nested stacks for a project
+│   ├── ds_notebook_v1.yaml                 # Early version of a Jupyter notebook product
+│   ├── ds_notebook_v2.yaml                 # Refined version of a notebook product
+│   ├── ds_shared_services_ecs.yaml         # PyPI mirror running on AWS Fargate
+│   └── ds_shared_services_network.yaml     # Creates a shared services VPC
+├── docs
+│   └── images
+│       └── hla.png
+└── src
+    ├── detective_control
+    │   └── inspect_sagemaker_resource.py   # Lambda function to detect non-VPC-attached SageMaker resources
+    └── project_template
+        ├── 00_SageMaker-SysOps-Workflow.ipynb          # Sample Jupyter notebbok to demonstrate security controls
+        ├── 01_SageMaker-DataScientist-Workflow.ipynb   # Sample Jupyter notebook to demonstrate secure ML lifecycle
+        ├── 02_SageMaker-DevOps-Workflow.ipynb          # Second half of a secure ML lifecycle
+        ├── credit_card_default_data.xls                # Sample data set
+        ├── util
+            ├── __init__.py
+            └── utilsspec.py
+```
+
