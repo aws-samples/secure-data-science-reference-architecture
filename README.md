@@ -96,15 +96,15 @@ Using cloud services in a safe and responsible manner is good, but being able to
 
 ![High-level Architecture](docs/images/hla.png)
 
-Once deployed you are provided with a Data Science Product Portfolio, powered by [AWS Service Catalog](https://aws.amazon.com/servicecatalog/).  This allows users who have assumed the *Project Administrator* role to deploy new data science environments using the *Data Science Environment* product within the catalog.  Project Administrators can specify a project name, the environment type, and a few other criteria to launch the data science environment.  AWS Service Catalog will then create a data science project environment consisting of:
+Once deployed, this CloudFormation stack provides you with a Data Science Product Portfolio, powered by [AWS Service Catalog](https://aws.amazon.com/servicecatalog/).  This allows users who have assumed the *Project Administrator* role to deploy new data science environments using the *Data Science Environment* product within the catalog.  Project Administrators can specify a project name, the environment type, and a few other criteria to launch the data science environment.  AWS Service Catalog will then create a data science project environment consisting of:
 
-  - A private, isolated, dedicated network environment built using an Amazon VPC
-  - Private connectivity to specific AWS services and a customer-hosted, shared-service deployment of a PyPI mirror
-  - Private, dedicated Amazon S3 buckets for project data and intellectual property
-  - A project Git repository hosted by AWS CodeCommit
-  - Project-specific encryption keys managed by Amazon KMS
-  - Dedicated AWS IAM roles for project resources
-  - A project-specific product portfolio so project team members can provision resources for themselve
+  - A private, isolated, dedicated network environment built using an [Amazon VPC](https://aws.amazon.com/vpc/)
+  - [Private connectivity](https://aws.amazon.com/privatelink/) to specific AWS services and a customer-hosted, shared-service deployment of a PyPI mirror
+  - Private, dedicated [Amazon S3 buckets](https://aws.amazon.com/s3/) for project data and intellectual property
+  - A project Git repository hosted by [AWS CodeCommit](https://aws.amazon.com/codecommit/)
+  - Project-specific encryption keys managed by [AWS Key Management Service (KMS)](https://aws.amazon.com/kms/)
+  - Dedicated [AWS Identity & Access Management (IAM)](https://aws.amazon.com/iam/) roles for project resources
+  - A project-specific product portfolio so project team members can provision resources for themselves
 
 To use the environment, project team members can assume the *Data Science Project Administrator* role or the *Data Science Project User* role.  Once they have assumed a project role users can provision resources within the data science environment.  By visiting the AWS Service Catalog console they can access the project's product portfolio and launch an Amazon SageMaker notebook.  
 
