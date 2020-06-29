@@ -25,6 +25,18 @@ Use the following links below to quickly deploy this repository to your AWS acco
 | London (eu-west-2) | [![Deploy to AWS London](https://camo.githubusercontent.com/9c49a15ad7e4c64cae6fc0d4448935283b5cd71a/68747470733a2f2f63646e2e7261776769742e636f6d2f6275696c646b6974652f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2d627574746f6e2d7376672f6d61737465722f6c61756e63682d737461636b2e737667 "Deploy to AWS London")](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/create/review?stackName=secure-ds-core&templateURL=https://s3.amazonaws.com/sagemaker-workshop-cloudformation-eu-west-2/quickstart/ds_administration.yaml) |
 | Sydney (ap-southeast-2) | [![Deploy to AWS Sydney](https://camo.githubusercontent.com/9c49a15ad7e4c64cae6fc0d4448935283b5cd71a/68747470733a2f2f63646e2e7261776769742e636f6d2f6275696c646b6974652f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2d627574746f6e2d7376672f6d61737465722f6c61756e63682d737461636b2e737667 "Deploy to AWS Sydney")](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/create/review?stackName=secure-ds-core&templateURL=https://s3.amazonaws.com/sagemaker-workshop-cloudformation-ap-southeast-2/quickstart/ds_administration.yaml) |
 
+Assuming you are signed into the AWS console you will be taken to the AWS CloudFormation console for your selected region.  Accept the stack's default values, tick the boxes for `Capabilities` and click `Create stack`.  After approximately 5 minutes the stack will have deployed a Shared Services VPC to be leveraged across all data science environments and a PyPI mirror for pre-approved Python package hosting within your network.  The stack also will have deployed a product portfolio for creating data science enviornments.  
+
+To access the portfolio click the `Outputs` tab of the CloudFormation stack and use the `AssumeProjectAdminRole` link to become a project administrator, capable of creating data science project environments.  Once you've assumed the role you can visit the [AWS Service Catalog console](https://console.aws.amazon.com/servicecatalog/home?isSceuc=true#/products) to deploy a data science environment.
+
+Click the context menu icon next to the `Data Science Project Environment` product and click `Launch product`.  After you provide a name for the product launch, and provide a project name, click `Launch` and you will have created your first data science project environment.  This will launch a CloudFormation stack to provision the data science environment.  This will require about 10 minutes to execute.
+
+When the data science project environment has completed its deployment you will have 2 links available from the Service Catalog console to assume user roles in the data science environment.  Click on the `AssumeProjectUserRole` and return to the [AWS Service Catalog console](https://console.aws.amazon.com/servicecatalog/home?isSceuc=true#/products) to launch a Jupyter notebook.
+
+Click the context menu icon next to the `SageMaker Notebook` product, select `Launch product`, and give your notebook product a name.  Provide an email address, specify the name of the project this notebook belongs to, and a username.  Click `Launch` and 5 minutes later you will be provided with a hyperlink to open your Jupyter notebook server.  
+
+From the Jupyter notebook server, using the sample notebooks, you can develop features, train, host, and monitor a machine learning model in a secure manner.  If you assume your original AWS role you can also, from the AWS console, explore the various features deployed by the CloudFormation stacks.
+
 ## License
 
 This source code is licensed under the [MIT-0 License](https://github.com/aws/mit-0). See the [LICENSE](LICENSE) file for details.
