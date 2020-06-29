@@ -6,11 +6,17 @@ Amazon SageMaker is a powerful enabler and a key component of a data science env
 
 ## Table of Contents
 
-1. Getting Started
-1. License
-1. Features
-1. Architecture Overview
-1. Repository Breakdown
+  1. [Getting Started](#getting-started)
+  1. [Features](#features)
+
+      * [Private Network per Data Science Environment](#private-network-per-data-science-environment)
+      * [Authentication and Authorization](#authentication-and-authorization)
+      * [Data Protection](#data-protection)
+      * [Auditability](#auditability)
+
+  1. [Architecture & Process Overview](#architecture---process-overview)
+  1. [Repository Breakdown](#repository-breakdown)
+  1. [License](#license)
 
 ## Getting Started
 
@@ -37,9 +43,6 @@ Click the context menu icon next to the `SageMaker Notebook` product, select `La
 
 From the Jupyter notebook server, using the sample notebooks, you can develop features, train, host, and monitor a machine learning model in a secure manner.  If you assume your original AWS role you can also, from the AWS console, explore the various features deployed by the CloudFormation stacks.
 
-## License
-
-This source code is licensed under the [MIT-0 License](https://github.com/aws/mit-0). See the [LICENSE](LICENSE) file for details.
 
 ## Features
 
@@ -55,7 +58,15 @@ AWS Identity and Access Management (IAM) is used to create least-privilege, prev
 
 There are several IAM roles deployed by this source code to manage permissions and ensure separation of concerns at scale.  Those roles are:
 
-- **Data scientist user role**
+- **Project Administrator role**
+
+    Granting permissions to create data science environments via the AWS Service Catalog.
+
+- **Data science environment administrator role**
+
+    Granting permissions to administer project-specific resources.
+
+- **Data science environment user role**
 
     Granting Console access, start/stop Jupyter notebook, open Jupyter notebook, create Jupyter notebook via Service Catalog
 
@@ -118,6 +129,7 @@ This repository contains the following files:
 ├── LICENSE                                 # Details for the MIT-0 license
 ├── README.md                               # This readme
 ├── cloudformation
+│   ├── publish_cloudformation.sh           # Bash shell script to package and prepare CloudFormation for deployment
 │   ├── ds_admin_detective.yaml             # Deploys a detective control to manage SageMaker resources
 │   ├── ds_admin_principals.yaml            # Deploys the Project Administrator role
 │   ├── ds_administration.yaml              # Deploys nested stacks
@@ -147,3 +159,6 @@ This repository contains the following files:
             └── utilsspec.py
 ```
 
+## License
+
+This source code is licensed under the [MIT-0 License](https://github.com/aws/mit-0). See the [LICENSE](LICENSE) file for details.
