@@ -14,7 +14,7 @@ Amazon SageMaker is a powerful enabler and a key component of a data science env
       * [Data Protection](#data-protection)
       * [Auditability](#auditability)
 
-  1. [Architecture & Process Overview](#architecture---process-overview)
+  1. [Architecture and Process Overview](#architecture-and-process-overview)
   1. [Repository Breakdown](#repository-breakdown)
   1. [License](#license)
 
@@ -92,7 +92,7 @@ Using cloud services in a safe and responsible manner is good, but being able to
  - Amazon SageMaker Hosted Models
  - VPC Flow Logs
 
-## Architecture & Process Overview
+## Architecture and Process Overview
 
 ![High-level Architecture](docs/images/hla.png)
 
