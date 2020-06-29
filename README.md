@@ -16,6 +16,7 @@ Amazon SageMaker is a powerful enabler and a key component of a data science env
 
   1. [Architecture and Process Overview](#architecture-and-process-overview)
   1. [Repository Breakdown](#repository-breakdown)
+  1. [Further Reading](#further-reading)
   1. [License](#license)
 
 ## Getting Started
@@ -166,6 +167,17 @@ This repository contains the following files:
             ├── __init__.py
             └── utilsspec.py
 ```
+
+## Further Reading
+
+There is a multitude of material and resources available to you to advise you on how to best support your business using AWS services.  The following is a non-exhaustive list in no particular order:
+
+ - [Amazon SageMaker documentation regarding security](https://docs.aws.amazon.com/sagemaker/latest/dg/security.html)
+ - [Sample Lifecylce Configuration scripts for Amazon SageMaker](https://github.com/aws-samples/amazon-sagemaker-notebook-instance-lifecycle-config-samples)
+ - [AWS Well-Architected Framework: Machine Learning Lens](https://d1.awsstatic.com/whitepapers/architecture/wellarchitected-Machine-Learning-Lens.pdf)
+ - [Secure and Compliant Machine Learning Workflows with Amazon SageMaker (video)](https://youtu.be/HlSEUvApDZE)
+ - [An Overview of Amazon SageMaker Security (video)](https://youtu.be/zTJTzKcNzMk)
+ - [Building Secure Machine Learning Environments using Amazon SageMaker (video)](https://youtu.be/txr6CR87GXI)
 
 ## License
 
