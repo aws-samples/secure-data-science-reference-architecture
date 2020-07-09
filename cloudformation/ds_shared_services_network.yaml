@@ -176,3 +176,20 @@ Resources:
     Properties:
       RouteTableId: !Ref SharedServicesRouteTable
       SubnetId: !Ref SharedServicesSubnetC
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument: '{
+        "Version":"2012-10-17",
+        "Statement":[{
+          "Effect":"Allow",
+          "Principal": "*",
+          "Action":["s3:Get*", "s3:List*"],
+          "Resource":["*"]
+        }]
+      }'
+      RouteTableIds:
+        - !Ref SharedServicesRouteTable
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref SharedServicesVPC
