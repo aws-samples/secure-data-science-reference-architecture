@@ -280,10 +280,10 @@ Resources:
               "s3:ListBucket"
             ], 
             "Resource":[
-              "arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}",
-              "arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}",
-              "arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}/*",
-              "arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}/*"
+              "arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}-*",
+              "arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}-*",
+              "arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}-*/*",
+              "arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}-*/*"
               ]
           }]
         }
