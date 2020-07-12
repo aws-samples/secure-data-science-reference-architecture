@@ -35,7 +35,7 @@ PUBLISH_PYPI=${PUBLISH_PYPI:True}
 if aws s3 ls s3://${CFN_BUCKET_NAME} 2>&1 | grep NoSuchBucket
 then
     echo Creating Amazon S3 bucket ${CFN_BUCKET_NAME}
-    aws s3 mb s3://${CFN_BUCKET_NAME}
+    aws s3 mb s3://${CFN_BUCKET_NAME} --region $AWS_DEFAULT_REGION
 fi
 echo Preparing content for publication to Amazon S3 s3://${CFN_BUCKET_NAME}
 

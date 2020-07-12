@@ -116,7 +116,30 @@ Resources:
   DataBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "ds-data-bucket-${ProjectName}-${EnvType}"
+      BucketName:
+        !Join
+          - ""
+          -
+            - "ds-data-bucket-"
+            - !Ref ProjectName
+            - "-"
+            - !Ref EnvType
+            - "-"
+            - !Select
+                - 0
+                - Fn::Split:
+                  - "3"
+                  - !Ref "AWS::AccountId"
+            - !Select
+                - 0
+                - Fn::Split:
+                  - "7"
+                  - !Ref "AWS::AccountId"
+            - !Select
+                - 0
+                - Fn::Split:
+                  - "0"
+                  - !Ref "AWS::AccountId"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: TRUE
         BlockPublicPolicy: TRUE
@@ -157,7 +180,30 @@ Resources:
   ModelArtifactsBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "ds-model-bucket-${ProjectName}-${EnvType}"
+      BucketName:
+        !Join
+          - ""
+          -
+            - "ds-model-bucket-"
+            - !Ref ProjectName
+            - "-"
+            - !Ref EnvType
+            - "-"
+            - !Select
+                - 0
+                - Fn::Split:
+                  - "3"
+                  - !Ref "AWS::AccountId"
+            - !Select
+                - 0
+                - Fn::Split:
+                  - "7"
+                  - !Ref "AWS::AccountId"
+            - !Select
+                - 0
+                - Fn::Split:
+                  - "0"
+                  - !Ref "AWS::AccountId"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: TRUE
         BlockPublicPolicy: TRUE
