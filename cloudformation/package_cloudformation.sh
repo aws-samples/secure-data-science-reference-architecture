@@ -29,7 +29,7 @@ UPLOAD_LIST="ds_environment.yaml ds_notebook_v1.yaml ds_notebook_v2.yaml project
 SELF_PACKAGE_LIST="ds_administration.yaml ds_env_catalog.yaml ds_env_backing_store.yaml ds_shared_services_ecs.yaml"
 # files to be packaged using `aws cloudformation package`
 AWS_PACKAGE_LIST="ds_environment.yaml ds_administration.yaml"
-TMP_OUTPUT_DIR="/tmp/build"
+TMP_OUTPUT_DIR="/tmp/build/${AWS_DEFAULT_REGION}"
 PUBLISH_PYPI=${PUBLISH_PYPI:True}
 
 if aws s3 ls s3://${CFN_BUCKET_NAME} 2>&1 | grep NoSuchBucket
