@@ -179,10 +179,10 @@ Resources:
               - 's3:PutObject'
               - 's3:DeleteObject'
             Resource:
-              - !Sub 'arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}'
-              - !Sub 'arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}/*'
-              - !Sub 'arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}'
-              - !Sub 'arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}/*'
+              - !Sub 'arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}-*'
+              - !Sub 'arn:aws:s3:::ds-data-bucket-${ProjectName}-${EnvType}-*/*'
+              - !Sub 'arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}-*'
+              - !Sub 'arn:aws:s3:::ds-model-bucket-${ProjectName}-${EnvType}-*/*'
           - Effect: Allow
             Action:
               - 's3:GetBucketLocation'

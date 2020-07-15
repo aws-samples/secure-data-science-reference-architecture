@@ -21,7 +21,7 @@ set -e
 # . - zip
 
 # PLEASE NOTE this script will store all resources to an Amazon S3 bucket s3://${CFN_BUCKET_NAME}/${PROJECT_NAME}
-CFN_BUCKET_NAME=${CFN_BUCKET_NAME:="< YOUR PRIVATE S3 BUCKET NAME >"}
+CFN_BUCKET_NAME=${CFN_BUCKET_NAME:="secure-data-science-cloudformation-$RANDOM-$AWS_DEFAULT_REGION"}
 PROJECT_NAME="quickstart"
 # files that wont be uploaded by `aws cloudformation package`
 UPLOAD_LIST="ds_environment.yaml ds_notebook_v1.yaml ds_notebook_v2.yaml project_template.zip ds_administration.yaml" 
@@ -29,8 +29,15 @@ UPLOAD_LIST="ds_environment.yaml ds_notebook_v1.yaml ds_notebook_v2.yaml project
 SELF_PACKAGE_LIST="ds_administration.yaml ds_env_catalog.yaml ds_env_backing_store.yaml ds_shared_services_ecs.yaml"
 # files to be packaged using `aws cloudformation package`
 AWS_PACKAGE_LIST="ds_environment.yaml ds_administration.yaml"
-TMP_OUTPUT_DIR="/tmp/build"
+TMP_OUTPUT_DIR="/tmp/build/${AWS_DEFAULT_REGION}"
 PUBLISH_PYPI=${PUBLISH_PYPI:True}
+
+if aws s3 ls s3://${CFN_BUCKET_NAME} 2>&1 | grep NoSuchBucket
+then
+    echo Creating Amazon S3 bucket ${CFN_BUCKET_NAME}
+    aws s3 mb s3://${CFN_BUCKET_NAME} --region $AWS_DEFAULT_REGION
+fi
+echo Preparing content for publication to Amazon S3 s3://${CFN_BUCKET_NAME}
 
 ## clean away any previous builds of the CFN
 rm -fr ${TMP_OUTPUT_DIR}
