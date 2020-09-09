@@ -18,6 +18,9 @@ Parameters:
   QuickstartMode:
     Type: String
     Default: true
+    AllowedValues:
+      - true
+      - false
     Description: true indicates a quickstart-style deployment, false indicates a workshop deployment
 
 Conditions: 
