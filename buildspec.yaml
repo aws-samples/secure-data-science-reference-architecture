@@ -10,5 +10,6 @@ phases:
 
   build:
     commands:
+      - env
       - echo Packaging Cloudformation and uploading to S3...
       - ./package_cloudformation.sh
