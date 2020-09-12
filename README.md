@@ -1,4 +1,4 @@
-# Secure Data Science Quickstart
+# Secure Data Science Reference Architecture
 
 ## Overview
 
