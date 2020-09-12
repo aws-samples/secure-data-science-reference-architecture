@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - apt-get update
-      - apt-get install python3-pip zip
+      - apt-get install python3-pip zip -y
       - pip3 install -U pip
       - pip3 install awscli
 
@@ -12,7 +12,3 @@ phases:
     commands:
       - echo Packaging Cloudformation and uploading to S3...
       - ./package_cloudformation.sh
-
-artifacts:
-  files:
-    - target/javawebdemo.war
