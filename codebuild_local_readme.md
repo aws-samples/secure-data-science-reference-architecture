@@ -11,27 +11,21 @@ this repository in case you're unfamiliar.
 
 AWS CodeBuild Local relies on 2 Docker Containers. The first, (aws-codebuild-local)[https://hub.docker.com/r/amazon/aws-codebuild-local/]
 acts as the service daemon, monitoring the build.  The second container is the hosting contianer used to execute the project
-buildspec.yaml.  This second container is not published to Docker Hub and so must be built.  Alternatively you can specify your
-own build container.
+buildspec.yaml.  For the purpose of this project the latest Ubuntu image should suffice.
 
-### Build the AWS CodeBuild standard build container
+To get these two containers the following commands should be executed:
 
 ```bash
-git clone https://github.com/aws/aws-codebuild-docker-images.git
-cd ubuntu/standard/4.0
-docker build -t aws/codebuild/standard:4.0 .
+docker pull amazon/aws-codebuild-local
+docker pull ubuntu
 ```
-
-This will download the source for and build the standard Ubuntu build container.
-
-> Note: this build will take about 30 min.
 
 ## Execute the build
 
 To run CodeBuild locally use the shell script `codebuild_local.sh` to kick things off:
 
 ```bash
-./codebuild_local.sh -i 'aws/codebuild/standard:4.0' -f .
+./codebuild_local.sh -i 'ubuntu:latest' -f .
 ```
 
 This will install any dependencies such as zip, Python pip, and the AWS CLI.  It will then execute the `package_cloudformation.sh`
