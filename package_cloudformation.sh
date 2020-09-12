@@ -42,15 +42,15 @@ echo Preparing content for publication to Amazon S3 s3://${CFN_BUCKET_NAME}
 ## clean away any previous builds of the CFN
 rm -fr ${TMP_OUTPUT_DIR}
 mkdir -p ${TMP_OUTPUT_DIR}
-cp *.yaml ${TMP_OUTPUT_DIR}
+cp cloudformation/*.yaml ${TMP_OUTPUT_DIR}
 
 echo "Zipping code sample..."
-pushd ../src/project_template
+pushd src/project_template
 zip -r ${TMP_OUTPUT_DIR}/project_template.zip ./*
 popd
 
 echo "Zipping detective control..."
-pushd ../src/detective_control
+pushd src/detective_control
 zip -r ${TMP_OUTPUT_DIR}/vpc_detective_control.zip ./*
 popd
 
@@ -78,7 +78,7 @@ if $PUBLISH_PYPI; then
         s3://${CFN_BUCKET_NAME}/${PROJECT_NAME}/ \
         --recursive \
         --region ${REGION}
-    
+
     echo "Copying PyPI mirror wheels to S3..."
     aws s3 sync ${TMP_OUTPUT_DIR}/pypimirror s3://${CFN_BUCKET_NAME}/${PROJECT_NAME}/pypimirror
 else
@@ -92,7 +92,7 @@ fi
 echo "Self-packaging some Cloudformation templates..."
 for fname in ${SELF_PACKAGE_LIST};
 do
-    sed -e "s/< S3_CFN_STAGING_BUCKET >/${CFN_BUCKET_NAME}\/${PROJECT_NAME}/" ${fname} > ${TMP_OUTPUT_DIR}/${fname}
+    sed -e "s/< S3_CFN_STAGING_BUCKET >/${CFN_BUCKET_NAME}\/${PROJECT_NAME}/" cloudformation/${fname} > ${TMP_OUTPUT_DIR}/${fname}
 done
 
 echo "Packaging Cloudformation templates..."
@@ -107,17 +107,17 @@ do
         --region ${REGION}
     popd
 done
-    
+
 # push files to S3, note this does not 'package' the templates
 echo "Copying cloudformation templates and files to S3..."
 for fname in ${UPLOAD_LIST};
-do 
+do
     if [ -f ${TMP_OUTPUT_DIR}/${fname}-${REGION} ]; then
         aws s3 cp ${TMP_OUTPUT_DIR}/${fname}-${REGION} s3://${CFN_BUCKET_NAME}/${PROJECT_NAME}/${fname}
     else
         aws s3 cp ${TMP_OUTPUT_DIR}/${fname} s3://${CFN_BUCKET_NAME}/${PROJECT_NAME}/${fname}
     fi
-done 
+done
 
 echo ==================================================
 echo "Publication complete"
