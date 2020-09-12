@@ -126,20 +126,14 @@ Resources:
             - !Ref EnvType
             - "-"
             - !Select
-                - 0
-                - Fn::Split:
-                  - "3"
-                  - !Ref "AWS::AccountId"
-            - !Select
-                - 0
-                - Fn::Split:
-                  - "7"
-                  - !Ref "AWS::AccountId"
-            - !Select
-                - 0
-                - Fn::Split:
-                  - "0"
-                  - !Ref "AWS::AccountId"
+              - 4
+              - !Split
+                - '-'
+                - !Select
+                  - 2
+                  - !Split
+                    - /
+                    - !Ref 'AWS::StackId'
       PublicAccessBlockConfiguration:
         BlockPublicAcls: TRUE
         BlockPublicPolicy: TRUE
