@@ -69,6 +69,7 @@ Resources:
                   - 'cloudformation:CreateStack'
                   - 'cloudformation:DeleteStack'
                   - 'cloudformation:DescribeStacks'
+                  - 'cloudformation:DescribeStackEvents'
                   - 'cloudformation:GetTemplateSummary'
                   - 'cloudformation:ValidateTemplate'
                   - 'codecommit:CreateCommit'
