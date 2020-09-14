@@ -118,13 +118,13 @@ Resources:
     Properties:
       BucketName:
         !Join
-          - ""
+          - ''
           -
-            - "ds-data-bucket-"
+            - 'ds-data-bucket-'
             - !Ref ProjectName
-            - "-"
+            - '-'
             - !Ref EnvType
-            - "-"
+            - '-'
             - !Select
               - 4
               - !Split
