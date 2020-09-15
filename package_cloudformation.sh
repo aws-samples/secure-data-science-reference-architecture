@@ -93,8 +93,8 @@ echo "Self-packaging some Cloudformation templates..."
 for fname in ${SELF_PACKAGE_LIST};
 do
     sed -e "s/< S3_CFN_STAGING_PATH >/${PROJECT_NAME}/" cloudformation/${fname} > ${TMP_OUTPUT_DIR}/${fname}
-    sed -e "s/< S3_CFN_STAGING_BUCKET >/${CFN_BUCKET_NAME}/" cloudformation/${fname} > ${TMP_OUTPUT_DIR}/${fname}
-    sed -e "s/< S3_CFN_STAGING_BUCKET_PATH >/${CFN_BUCKET_NAME}\/${PROJECT_NAME}/" cloudformation/${fname} > ${TMP_OUTPUT_DIR}/${fname}
+    sed -e "s/< S3_CFN_STAGING_BUCKET >/${CFN_BUCKET_NAME}/" ${TMP_OUTPUT_DIR}/${fname} > ${TMP_OUTPUT_DIR}/${fname}
+    sed -e "s/< S3_CFN_STAGING_BUCKET_PATH >/${CFN_BUCKET_NAME}\/${PROJECT_NAME}/" ${TMP_OUTPUT_DIR}/${fname} > ${TMP_OUTPUT_DIR}/${fname}
 done
 
 echo "Packaging Cloudformation templates..."
