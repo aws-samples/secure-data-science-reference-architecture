@@ -47,6 +47,33 @@ Resources:
               - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_notebook_v2.yaml'
               - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_notebook_v1.yaml' 
 
+  DSUserNotebookProjectConstraint:
+    Type: AWS::ServiceCatalog::LaunchTemplateConstraint
+    Properties: 
+      Description: Ensure the project name is the same as that associated with this portfolio.
+      PortfolioId: !Ref DSUserPortfolio
+      ProductId: !Ref DSUserNotebookProduct
+      Rules: !Sub |
+        {
+          "ProjectNameConstraint": {
+            "Assertions": [
+              {
+                "Assert": {
+                  "Fn::Contains": [
+                    [
+                      "${ProjectName}"
+                    ],
+                    {
+                      "Ref": "ProjectName"
+                    }
+                  ]
+                },
+                "AssertDescription": "Project Name can only be set to '${ProjectName}'"
+              }
+            ]
+          }
+        }
+
   SCPortfolioSageMakerProductAssociation:
     Type: 'AWS::ServiceCatalog::PortfolioProductAssociation'
     Properties:
