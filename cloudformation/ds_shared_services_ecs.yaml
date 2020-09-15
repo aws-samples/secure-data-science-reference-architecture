@@ -234,7 +234,7 @@ Resources:
           Command: 
             - s3 
             - sync
-            - s3://< S3_CFN_STAGING_BUCKET >/pypimirror/ 
+            - s3://< S3_CFN_STAGING_BUCKET_PATH >/pypimirror/ 
             - /data/packages/ 
           # Send logs to CloudWatch Logs
           LogConfiguration:

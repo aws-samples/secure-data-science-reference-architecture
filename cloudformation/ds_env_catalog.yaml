@@ -44,8 +44,8 @@ Resources:
           Info:
             LoadTemplateFromURL: !If
               - IsAQuickstart
-              - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET >/ds_notebook_v2.yaml'
-              - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET >/ds_notebook_v1.yaml' 
+              - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_notebook_v2.yaml'
+              - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_notebook_v1.yaml' 
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName

@@ -242,8 +242,8 @@ Resources:
       RepositoryDescription: Data scienc project code repository
       Code:
         S3: 
-          Bucket: < S3_CFN_STAGING_BUCKET >
-          Key: project_template.zip
+          Bucket: '< S3_CFN_STAGING_BUCKET >'
+          Key: '< S3_CFN_STAGING_PATH >/project_template.zip'
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName

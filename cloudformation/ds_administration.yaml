@@ -46,7 +46,7 @@ Resources:
       ProvisioningArtifactParameters:
         - Name: 'DS Environment v1'
           Info:
-            LoadTemplateFromURL: 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET >/ds_environment.yaml'
+            LoadTemplateFromURL: 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_environment.yaml'
 
   SCPortfolioSageMakerProductAssociation:
     Type: 'AWS::ServiceCatalog::PortfolioProductAssociation'
