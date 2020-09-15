@@ -46,11 +46,6 @@ Resources:
               - IsAQuickstart
               - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_notebook_v2.yaml'
               - 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/ds_notebook_v1.yaml' 
-      Tags:
-        - Key: ProjectName
-          Value: !Ref ProjectName
-        - Key: EnvironmentType
-          Value: !Ref EnvType
 
   SCPortfolioSageMakerProductAssociation:
     Type: 'AWS::ServiceCatalog::PortfolioProductAssociation'
