@@ -4,7 +4,8 @@ import re
 import tarfile
 import matplotlib.pyplot as plt
 import xgboost as xgb
-from sklearn.externals import joblib
+# from sklearn.externals import joblib
+import joblib
 
 def download_artifacts(job_name, local_fname):
     ''' Given a trial name in a SageMaker Experiment, extract the model file and download it locally'''
