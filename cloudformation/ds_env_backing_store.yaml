@@ -121,7 +121,24 @@ Resources:
           - ''
           -
             - 'ds-data-bucket-'
-            - !Ref ProjectName
+            - 'Fn::Transform':
+              - Name: 'String'
+              - Parameters:
+                - OperationName: MaxLength
+                - Length: 30
+                - InputString:
+                  'Fn::Transform':
+                    - Name: 'String'
+                    - Parameters:
+                      - OperationName: Replace
+                      - Old: ' '
+                      - New: '-'
+                      - InputString:
+                        'Fn::Transform':
+                          - Name: 'String'
+                          - Parameters:
+                            - InputString: !Ref ProjectName
+                            - OperationName: Lower
             - '-'
             - !Ref EnvType
             - '-'
