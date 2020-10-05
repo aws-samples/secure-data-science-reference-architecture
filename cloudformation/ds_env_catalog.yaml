@@ -2,10 +2,14 @@ Description: |
   Template to create a service catalog product to launch a notebook
 
 Parameters:
+  NaturalProjectName:
+    Type: String
+    Description: Natural name of the project team.
+
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
-    Description: Please specify your project name.  Used as a suffix for project resource names.
+    AllowedPattern: '[a-z0-9\-]*'
+    Description: Project team name with no spaces or uppercase letters.
 
   EnvType:
     Description: System Environment
@@ -26,18 +30,18 @@ Resources:
     Properties:
       Description: !Sub 'Portfolio for ${ProjectName}-${EnvType} products'
       DisplayName: !Sub '${ProjectName}-${EnvType} products'
-      ProviderName: !Sub '${ProjectName} Administration'
+      ProviderName: !Sub '${NaturalProjectName} Administration'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
   DSUserNotebookProduct:
     Type: AWS::ServiceCatalog::CloudFormationProduct
     Properties:
-      Description: !Sub 'SageMaker ${EnvType} notebook for the ${ProjectName} project'
-      Name: !Sub '${ProjectName} SageMaker ${EnvType} notebook'
+      Description: !Sub 'SageMaker ${EnvType} notebook for the ${NaturalProjectName} project'
+      Name: !Sub '${NaturalProjectName} SageMaker ${EnvType} notebook'
       Owner: 'Data Science CoE'
       ProvisioningArtifactParameters:
         - Name: 'DS User Notebook v1'
@@ -61,14 +65,14 @@ Resources:
                 "Assert": {
                   "Fn::Contains": [
                     [
-                      "${ProjectName}"
+                      "${NaturalProjectName}"
                     ],
                     {
                       "Ref": "ProjectName"
                     }
                   ]
                 },
-                "AssertDescription": "Project Name can only be set to '${ProjectName}'"
+                "AssertDescription": "Project Name can only be set to '${NaturalProjectName}'"
               }
             ]
           }
@@ -155,7 +159,7 @@ Resources:
         - 'arn:aws:iam::aws:policy/AWSLambdaFullAccess'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 

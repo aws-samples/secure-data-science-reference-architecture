@@ -7,7 +7,6 @@ Description: Data Science Environment
 Parameters:
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
     Description: Please specify your Team Name.  Used as a suffix for team resource names
 
   EnvType:
@@ -56,7 +55,26 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName:
+          - 'Fn::Transform':
+            - Name: 'String'
+            - Parameters:
+              - OperationName: MaxLength
+              - Length: 30
+              - InputString:
+                'Fn::Transform':
+                  - Name: 'String'
+                  - Parameters:
+                    - OperationName: Replace
+                    - Old: ' '
+                    - New: '-'
+                    - InputString:
+                      'Fn::Transform':
+                        - Name: 'String'
+                        - Parameters:
+                          - InputString: !Ref ProjectName
+                          - OperationName: Lower
         EnvType: !Ref EnvType
         VpcCIDR: !Ref VpcCIDR
         Subnet1CIDR: !Ref Subnet1CIDR
@@ -79,7 +97,26 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName:
+          - 'Fn::Transform':
+            - Name: 'String'
+            - Parameters:
+              - OperationName: MaxLength
+              - Length: 30
+              - InputString:
+                'Fn::Transform':
+                  - Name: 'String'
+                  - Parameters:
+                    - OperationName: Replace
+                    - Old: ' '
+                    - New: '-'
+                    - InputString:
+                      'Fn::Transform':
+                        - Name: 'String'
+                        - Parameters:
+                          - InputString: !Ref ProjectName
+                          - OperationName: Lower
         EnvType: !Ref EnvType
       TemplateURL: ds_env_principals.yaml
       Tags:
@@ -95,7 +132,26 @@ Resources:
       - DSEnvironmentPrincipals
     Properties:
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName:
+          - 'Fn::Transform':
+            - Name: 'String'
+            - Parameters:
+              - OperationName: MaxLength
+              - Length: 30
+              - InputString:
+                'Fn::Transform':
+                  - Name: 'String'
+                  - Parameters:
+                    - OperationName: Replace
+                    - Old: ' '
+                    - New: '-'
+                    - InputString:
+                      'Fn::Transform':
+                        - Name: 'String'
+                        - Parameters:
+                          - InputString: !Ref ProjectName
+                          - OperationName: Lower
         EnvType: !Ref EnvType
       TemplateURL: ds_env_backing_store.yaml
       Tags:
@@ -109,7 +165,26 @@ Resources:
     DependsOn: DSEnvironmentPrincipals
     Properties:
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName:
+          - 'Fn::Transform':
+            - Name: 'String'
+            - Parameters:
+              - OperationName: MaxLength
+              - Length: 30
+              - InputString:
+                'Fn::Transform':
+                  - Name: 'String'
+                  - Parameters:
+                    - OperationName: Replace
+                    - Old: ' '
+                    - New: '-'
+                    - InputString:
+                      'Fn::Transform':
+                        - Name: 'String'
+                        - Parameters:
+                          - InputString: !Ref ProjectName
+                          - OperationName: Lower
         EnvType: !Ref EnvType
         QuickstartMode: 
           Fn::ImportValue:
@@ -127,7 +202,26 @@ Resources:
     DependsOn: DSEnvironmentBackingStore
     Properties:
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName:
+          - 'Fn::Transform':
+            - Name: 'String'
+            - Parameters:
+              - OperationName: MaxLength
+              - Length: 30
+              - InputString:
+                'Fn::Transform':
+                  - Name: 'String'
+                  - Parameters:
+                    - OperationName: Replace
+                    - Old: ' '
+                    - New: '-'
+                    - InputString:
+                      'Fn::Transform':
+                        - Name: 'String'
+                        - Parameters:
+                          - InputString: !Ref ProjectName
+                          - OperationName: Lower
         EnvType: !Ref EnvType
       TemplateURL: ds_env_sagemaker.yaml
       Tags:
@@ -139,7 +233,30 @@ Resources:
   DSEnvironmentResourceGroup:
     Type: "AWS::ResourceGroups::Group"
     Properties:
-      Name: !Sub 'ds-${ProjectName}-${EnvType}-resource-group'
+      Name: !Join:
+        - ""
+        - 
+          - "ds-"
+          - 'Fn::Transform':
+            - Name: 'String'
+            - Parameters:
+              - OperationName: MaxLength
+              - Length: 30
+              - InputString:
+                'Fn::Transform':
+                  - Name: 'String'
+                  - Parameters:
+                    - OperationName: Replace
+                    - Old: ' '
+                    - New: '-'
+                    - InputString:
+                      'Fn::Transform':
+                        - Name: 'String'
+                        - Parameters:
+                          - InputString: !Ref ProjectName
+          - "-"
+          - !Ref EnvType
+          - "-resource-group"
       Description: !Sub 'AWS Resources belonging to ${ProjectName} in its ${EnvType} environment.'
       ResourceQuery:
         Type: "TAG_FILTERS_1_0" 
