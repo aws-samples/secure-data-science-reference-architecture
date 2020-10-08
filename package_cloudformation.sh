@@ -101,6 +101,8 @@ echo "Packaging Cloudformation templates..."
 for fname in ${AWS_PACKAGE_LIST};
 do
     pushd ${TMP_OUTPUT_DIR}
+    echo "Packaging ${fname}..."
+    aws cloudformation validate-template --template-body file://${fname}
     aws cloudformation package \
         --template-file ${fname} \
         --s3-bucket ${CFN_BUCKET_NAME} \
