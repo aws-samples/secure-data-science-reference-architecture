@@ -30,7 +30,7 @@ Resources:
     Properties:
       Description: !Sub 'Portfolio for ${ProjectName}-${EnvType} products'
       DisplayName: !Sub '${ProjectName}-${EnvType} products'
-      ProviderName: !Sub '${NaturalProjectName} Administration'
+      ProviderName: !Sub '${ProjectName} Administration'
       Tags:
         - Key: ProjectName
           Value: !Ref NaturalProjectName
