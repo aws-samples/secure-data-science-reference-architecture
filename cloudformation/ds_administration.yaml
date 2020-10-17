@@ -73,7 +73,7 @@ Resources:
       ProductId: !Ref DSEnvironmentProduct
       RoleArn: !GetAtt DataSciencePrincipals.Outputs.SCLaunchRoleArn
 
-  CfnStringMacro:
+  CfnPyPlateMacro:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: pyplate_macro.yaml
