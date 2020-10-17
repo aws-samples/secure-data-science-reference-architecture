@@ -61,8 +61,7 @@ Resources:
         NaturalProjectName: !Ref ProjectName
         ProjectName: |
           #!PyPlate
-          proj_name = params['ProjectName']
-          output = proj_name[:32].lower().replace(' ', '-')
+          output = params['ProjectName'][:32].lower().replace(' ', '-')
         EnvType: !Ref EnvType
         VpcCIDR: !Ref VpcCIDR
         Subnet1CIDR: !Ref Subnet1CIDR
@@ -86,7 +85,9 @@ Resources:
       TemplateURL: ds_env_principals.yaml
       Parameters:
         NaturalProjectName: !Ref ProjectName
-        ProjectName: Bob
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:32].lower().replace(' ', '-')
         EnvType: !Ref EnvType
       Tags:
         - Key: ProjectName
@@ -103,7 +104,9 @@ Resources:
       TemplateURL: ds_env_backing_store.yaml
       Parameters:
         NaturalProjectName: !Ref ProjectName
-        ProjectName: Bob
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:32].lower().replace(' ', '-')
         EnvType: !Ref EnvType
       Tags:
         - Key: ProjectName
@@ -118,7 +121,9 @@ Resources:
       TemplateURL: ds_env_catalog.yaml
       Parameters:
         NaturalProjectName: !Ref ProjectName
-        ProjectName: Bob
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:32].lower().replace(' ', '-')
         EnvType: !Ref EnvType
         QuickstartMode: 
           Fn::ImportValue:
@@ -136,7 +141,9 @@ Resources:
       TemplateURL: ds_env_sagemaker.yaml
       Parameters:
         NaturalProjectName: !Ref ProjectName
-        ProjectName: Bob
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:32].lower().replace(' ', '-')
         EnvType: !Ref EnvType
       Tags:
         - Key: ProjectName
@@ -151,7 +158,7 @@ Resources:
         'Fn::Join':
           - ""
           - 
-            - "ds-bob"
+            - "ds-"
             - |
               #!PyPlate
               output = params['ProjectName'][:32].lower().replace(' ', '-')
