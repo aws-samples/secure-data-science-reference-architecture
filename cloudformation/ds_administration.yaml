@@ -76,7 +76,7 @@ Resources:
   CfnStringMacro:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: string_macro.yaml
+      TemplateURL: pyplate_macro.yaml
 
   DataSciencePrincipals:
     Type: AWS::CloudFormation::Stack

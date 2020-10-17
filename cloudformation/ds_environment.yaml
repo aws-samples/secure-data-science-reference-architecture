@@ -4,6 +4,8 @@
 # Lastly the template stores outputs into Parameter Store so they can be referenced later by SC products.
 Description: Data Science Environment
 
+Transform: [PyPlate]
+
 Parameters:
   ProjectName:
     Type: String
@@ -57,25 +59,10 @@ Resources:
       TemplateURL: ds_env_network.yaml
       Parameters:
         NaturalProjectName: !Ref ProjectName
-        ProjectName: 
-          'Fn::Transform':
-            Name: 'String'
-            Parameters:
-              OperationName: MaxLength
-              Length: 30
-              InputString: 
-                'Fn::Transform':
-                  Name: 'String'
-                  Parameters:
-                    OperationName: Replace
-                    Old: ' '
-                    New: '-'
-                    InputString:
-                      'Fn::Transform':
-                        Name: 'String'
-                        Parameters:
-                          InputString: !Ref ProjectName
-                          OperationName: Lower
+        ProjectName: |
+          #!PyPlate
+          proj_name = params['ProjectName']
+          output = proj_name[:32].lower().replace(' ', '-')
         EnvType: !Ref EnvType
         VpcCIDR: !Ref VpcCIDR
         Subnet1CIDR: !Ref Subnet1CIDR
@@ -165,23 +152,9 @@ Resources:
           - ""
           - 
             - "ds-bob"
-            - 'Fn::Transform':
-                  Name: 'String'
-                  Parameters:
-                    OperationName: MaxLength
-                    Length: 30
-                    InputString:
-                      'Fn::Transform':
-                          Name: 'String'
-                          Parameters:
-                            OperationName: Replace
-                            Old: ' '
-                            New: '-'
-                            InputString:
-                              'Fn::Transform':
-                                Name: 'String'
-                                Parameters:
-                                  InputString: !Ref ProjectName
+            - |
+              #!PyPlate
+              output = params['ProjectName'][:32].lower().replace(' ', '-')
             - "-"
             - !Ref EnvType
             - "-resource-group"
