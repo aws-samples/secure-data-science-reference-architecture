@@ -131,7 +131,7 @@ Resources:
                   - 'kms:UpdateAlias'
                   - 'kms:UpdateCustomKeyStore'
                   - 'kms:UpdateKeyDescription'
-                  - 'lambda:Invoke'
+                  - 'lambda:InvokeFunction'
                   - 'resource-groups:CreateGroup'
                   - 'resource-groups:DeleteGroup'
                   - 'resource-groups:Tag'
