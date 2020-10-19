@@ -65,14 +65,14 @@ Resources:
                 "Assert": {
                   "Fn::Contains": [
                     [
-                      "${NaturalProjectName}"
+                      "${ProjectName}"
                     ],
                     {
                       "Ref": "ProjectName"
                     }
                   ]
                 },
-                "AssertDescription": "Project Name can only be set to '${NaturalProjectName}'"
+                "AssertDescription": "Project Name can only be set to '${ProjectName}'"
               }
             ]
           }
