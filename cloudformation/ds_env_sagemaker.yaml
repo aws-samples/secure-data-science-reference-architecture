@@ -5,10 +5,14 @@
 Description: SageMaker specific resources for Data Science Environment
 
 Parameters:
+  NaturalProjectName:
+    Type: String
+    Description: Natural name of the project team.
+
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
-    Description: Please specify your Team Name.  Used as a suffix for team resource names
+    AllowedPattern: '[a-z0-9\-]*'
+    Description: Project team name with no spaces or uppercase letters.
 
   EnvType:
     Description: >-

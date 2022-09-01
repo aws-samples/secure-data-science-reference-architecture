@@ -2,10 +2,14 @@ Description: |
   Create a secure VPC designed to host a data science project team.
 
 Parameters:
+  NaturalProjectName:
+    Type: String
+    Description: Natural name of the project team.
+
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
-    Description: Please specify your project name.  Used as a suffix for project resource names.
+    AllowedPattern: '[a-z0-9\-]*'
+    Description: Project team name with no spaces or uppercase letters.
 
   EnvType:
     Description: System Environment
@@ -93,7 +97,7 @@ Resources:
         - Key: Name
           Value: !Sub "ds-vpc-${ProjectName}-${EnvType}"
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -113,7 +117,7 @@ Resources:
       AvailabilityZone: !Sub  "${AWS::Region}a"
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -133,7 +137,7 @@ Resources:
       AvailabilityZone: !Sub  "${AWS::Region}b"
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -153,7 +157,7 @@ Resources:
       AvailabilityZone: !Sub  "${AWS::Region}c"
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -177,7 +181,7 @@ Resources:
       VpcId: !Ref SageMakerVPC
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -217,7 +221,7 @@ Resources:
           SourceSecurityGroupId: !GetAtt SageMakerSecurityGroup.GroupId
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -228,7 +232,7 @@ Resources:
       VpcId: !Ref SageMakerVPC
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -252,7 +256,7 @@ Resources:
           SourceSecurityGroupId: !GetAtt SageMakerSecurityGroup.GroupId
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 

@@ -4,10 +4,11 @@
 # Lastly the template stores outputs into Parameter Store so they can be referenced later by SC products.
 Description: Data Science Environment
 
+Transform: [PyPlate]
+
 Parameters:
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
     Description: Please specify your Team Name.  Used as a suffix for team resource names
 
   EnvType:
@@ -55,8 +56,12 @@ Resources:
   DSEnvironmentNetwork:
     Type: AWS::CloudFormation::Stack
     Properties:
+      TemplateURL: ds_env_network.yaml
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:26].lower().replace(' ', '-')
         EnvType: !Ref EnvType
         VpcCIDR: !Ref VpcCIDR
         Subnet1CIDR: !Ref Subnet1CIDR
@@ -68,7 +73,6 @@ Resources:
             - ENDPOINT_ID:
                 Fn::ImportValue:
                   !Sub 'srv-endsrv-pypimirror-${SharedServiceStackSetName}'
-      TemplateURL: ds_env_network.yaml
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
@@ -78,10 +82,13 @@ Resources:
   DSEnvironmentPrincipals:
     Type: AWS::CloudFormation::Stack
     Properties:
-      Parameters:
-        ProjectName: !Ref ProjectName
-        EnvType: !Ref EnvType
       TemplateURL: ds_env_principals.yaml
+      Parameters:
+        NaturalProjectName: !Ref ProjectName
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:26].lower().replace(' ', '-')
+        EnvType: !Ref EnvType
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
@@ -94,10 +101,13 @@ Resources:
       - DSEnvironmentNetwork
       - DSEnvironmentPrincipals
     Properties:
-      Parameters:
-        ProjectName: !Ref ProjectName
-        EnvType: !Ref EnvType
       TemplateURL: ds_env_backing_store.yaml
+      Parameters:
+        NaturalProjectName: !Ref ProjectName
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:26].lower().replace(' ', '-')
+        EnvType: !Ref EnvType
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
@@ -108,14 +118,16 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: DSEnvironmentPrincipals
     Properties:
+      TemplateURL: ds_env_catalog.yaml
       Parameters:
-        ProjectName: !Ref ProjectName
+        NaturalProjectName: !Ref ProjectName
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:26].lower().replace(' ', '-')
         EnvType: !Ref EnvType
         QuickstartMode: 
           Fn::ImportValue:
             !Sub '${SharedServiceStackSetName}-QuickstartMode'
-
-      TemplateURL: ds_env_catalog.yaml
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
@@ -126,10 +138,13 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: DSEnvironmentBackingStore
     Properties:
-      Parameters:
-        ProjectName: !Ref ProjectName
-        EnvType: !Ref EnvType
       TemplateURL: ds_env_sagemaker.yaml
+      Parameters:
+        NaturalProjectName: !Ref ProjectName
+        ProjectName: |
+          #!PyPlate
+          output = params['ProjectName'][:26].lower().replace(' ', '-')
+        EnvType: !Ref EnvType
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
@@ -139,7 +154,17 @@ Resources:
   DSEnvironmentResourceGroup:
     Type: "AWS::ResourceGroups::Group"
     Properties:
-      Name: !Sub 'ds-${ProjectName}-${EnvType}-resource-group'
+      Name: 
+        'Fn::Join':
+          - ""
+          - 
+            - "ds-"
+            - |
+              #!PyPlate
+              output = params['ProjectName'][:26].lower().replace(' ', '-')
+            - "-"
+            - !Ref EnvType
+            - "-resource-group"
       Description: !Sub 'AWS Resources belonging to ${ProjectName} in its ${EnvType} environment.'
       ResourceQuery:
         Type: "TAG_FILTERS_1_0" 

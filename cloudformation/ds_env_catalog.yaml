@@ -2,10 +2,14 @@ Description: |
   Template to create a service catalog product to launch a notebook
 
 Parameters:
+  NaturalProjectName:
+    Type: String
+    Description: Natural name of the project team.
+
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
-    Description: Please specify your project name.  Used as a suffix for project resource names.
+    AllowedPattern: '[a-z0-9\-]*'
+    Description: Project team name with no spaces or uppercase letters.
 
   EnvType:
     Description: System Environment
@@ -29,15 +33,15 @@ Resources:
       ProviderName: !Sub '${ProjectName} Administration'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
   DSUserNotebookProduct:
     Type: AWS::ServiceCatalog::CloudFormationProduct
     Properties:
-      Description: !Sub 'SageMaker ${EnvType} notebook for the ${ProjectName} project'
-      Name: !Sub '${ProjectName} SageMaker ${EnvType} notebook'
+      Description: !Sub 'SageMaker ${EnvType} notebook for the ${NaturalProjectName} project'
+      Name: !Sub '${NaturalProjectName} SageMaker ${EnvType} notebook'
       Owner: 'Data Science CoE'
       ProvisioningArtifactParameters:
         - Name: 'DS User Notebook v1'
@@ -152,10 +156,10 @@ Resources:
         - 'arn:aws:iam::aws:policy/AWSCloudFormationFullAccess'
         - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
         - 'arn:aws:iam::aws:policy/AmazonSageMakerFullAccess'
-        - 'arn:aws:iam::aws:policy/AWSLambdaFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSLambda_FullAccess'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
