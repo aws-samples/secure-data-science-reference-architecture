@@ -5,10 +5,14 @@
 Description: Data Science Environment S3 data storage
 
 Parameters:
+  NaturalProjectName:
+    Type: String
+    Description: Natural name of the project team.
+
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
-    Description: Please specify your project name.  Used as a suffix for project resource names.
+    AllowedPattern: '[a-z0-9\-]*'
+    Description: Project team name with no spaces or uppercase letters.
 
   EnvType:
     Description: System Environment
@@ -93,7 +97,7 @@ Resources:
                     !Sub "ds-s3-endpoint-${ProjectName}-${EnvType}-id"
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -116,7 +120,7 @@ Resources:
   DataBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName:
+      BucketName: 
         !Join
           - ''
           -
@@ -146,7 +150,7 @@ Resources:
               KMSMasterKeyID: !Ref KMSCMK
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -204,7 +208,7 @@ Resources:
               KMSMasterKeyID: !Ref KMSCMK
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -240,6 +244,6 @@ Resources:
           Key: '< S3_CFN_STAGING_PATH >/project_template.zip'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType

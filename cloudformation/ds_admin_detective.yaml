@@ -17,7 +17,6 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: 'sts:AssumeRole'
-      RoleName: !Sub '${StackSetName}-SageMaker-DetectiveControl-Role'
       Policies:
         - PolicyName: LambdaInlineForSageMaker
           PolicyDocument:

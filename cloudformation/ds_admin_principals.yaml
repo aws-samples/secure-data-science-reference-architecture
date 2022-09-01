@@ -67,6 +67,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - 'cloudformation:CreateStack'
+                  - 'cloudformation:CreateChangeSet'
                   - 'cloudformation:DeleteStack'
                   - 'cloudformation:DescribeStacks'
                   - 'cloudformation:DescribeStackEvents'
@@ -130,6 +131,7 @@ Resources:
                   - 'kms:UpdateAlias'
                   - 'kms:UpdateCustomKeyStore'
                   - 'kms:UpdateKeyDescription'
+                  - 'lambda:InvokeFunction'
                   - 'resource-groups:CreateGroup'
                   - 'resource-groups:DeleteGroup'
                   - 'resource-groups:Tag'

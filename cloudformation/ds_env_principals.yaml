@@ -2,10 +2,14 @@ Description: |
   Template to create IAM principals for operation within the data science environment.
 
 Parameters:
+  NaturalProjectName:
+    Type: String
+    Description: Natural name of the project team.
+
   ProjectName:
     Type: String
-    AllowedPattern: '[A-Za-z0-9\-]*'
-    Description: Please specify your project name.  Used as a suffix for project resource names.
+    AllowedPattern: '[a-z0-9\-]*'
+    Description: Project team name with no spaces or uppercase letters.
 
   EnvType:
     Description: System Environment
@@ -67,7 +71,7 @@ Resources:
         - 'arn:aws:iam::aws:policy/AWSCodeCommitFullAccess'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
@@ -148,6 +152,7 @@ Resources:
                   - 'sagemaker:DescribeCodeRepository'
                   - 'sagemaker:ListEndpoints'
                   - 'sagemaker:ListCodeRepositories'
+                  - 'sagemaker:ListProcessingJobs'
                   - 'codecommit:BatchGetRepositories'
                   - 'codecommit:GitPull'
                   - 'codecommit:GitPush'
@@ -176,7 +181,7 @@ Resources:
         - 'arn:aws:iam::aws:policy/AWSCodeCommitReadOnly'
       Tags:
         - Key: ProjectName
-          Value: !Ref ProjectName
+          Value: !Ref NaturalProjectName
         - Key: EnvironmentType
           Value: !Ref EnvType
 
