@@ -48,7 +48,7 @@ Resources:
     Properties:
       FunctionName: SageMakerVPCEnforcer
       Description: Detective control to enforce VPC attachment of SageMaker resources
-      Runtime: python3.6
+      Runtime: python3.9
       Code: vpc_detective_control.zip
       Handler: inspect_sagemaker_resource.lambda_handler
       MemorySize: 320
